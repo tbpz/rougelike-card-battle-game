@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project: Logic Echo</title>
+  <meta name="description"
+    content="A tactical roguelike card battler. Face the Ancient Golem using the 3/5 Vow — draw 5 cards, play only 3." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ══ MAIN GAME SCREEN ══ -->
+  <div id="game-screen">
+
+    <!-- Header -->
+    <header id="game-header">
+      <h1 class="game-title">⟨ LOGIC ECHO ⟩</h1>
+      <p class="subtitle">The 3/5 Vow</p>
+    </header>
+
+    <!-- Battle Arena -->
+    <main id="battle-arena">
+
+      <!-- Player Panel -->
+      <section class="combatant-panel" id="player-panel">
+        <div class="combatant-name">THE SEEKER (YOU)</div>
+        <div class="hp-container">
+          <div class="hp-bar-bg">
+            <div class="hp-bar" id="player-hp-bar"></div>
+          </div>
+          <div class="hp-text"><span id="player-hp">30</span> / 30 HP</div>
+        </div>
+        <div class="status-row">
+          <div class="status-badge" id="player-armor-badge">
+            🛡️ <span id="player-armor">0</span>
+          </div>
+          <div class="status-badge insight-badge hidden" id="insight-badge">
+            ✨ INSIGHT
+          </div>
+        </div>
+      </section>
+
+      <!-- VS Divider -->
+      <div id="arena-center">
+        <div class="vs-glyph">VS</div>
+        <div id="turn-counter">Turn <span id="turn-num">1</span></div>
+      </div>
+
+      <!-- Enemy Panel -->
+      <section class="combatant-panel" id="enemy-panel">
+        <div class="combatant-name">ANCIENT GOLEM</div>
+        <div class="hp-container">
+          <div class="hp-bar-bg">
+            <div class="hp-bar enemy" id="enemy-hp-bar"></div>
+          </div>
+          <div class="hp-text"><span id="enemy-hp">50</span> / 50 HP</div>
+        </div>
+        <div class="intent-box" id="intent-box">
+          <div class="intent-label">INTENT</div>
+          <div class="intent-display">
+            <span id="intent-icon">⚙️</span>
+            <span id="intent-name">—</span>
+            <span id="intent-dmg" class="intent-dmg"></span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Turn Log -->
+    <section id="log-section">
+      <div id="turn-log"></div>
+    </section>
+
+    <!-- Hand & Controls -->
+    <section id="hand-section">
+      <div id="play-counter">Cards Played: <span id="played-count">0</span> / 3</div>
+      <div id="hand-container"></div>
+      <div id="controls">
+        <div class="deck-info">
+          <span>📚 Draw: <span id="draw-count">0</span></span>
+          <span>🗑️ Discard: <span id="discard-count">0</span></span>
+        </div>
+        <div class="controls-right">
+          <button id="play-selected-btn" class="btn-confirm hidden">Play 0 Cards ✓</button>
+          <button id="end-turn-btn" class="btn-primary">End Turn ›</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ══ RESULT OVERLAY ══ -->
+  <div id="result-overlay" class="hidden">
+    <div id="result-modal">
+      <div id="result-icon"></div>
+      <h2 id="result-title"></h2>
+      <p id="result-message"></p>
+      <button id="restart-btn" class="btn-primary">Play Again</button>
+    </div>
+  </div>
+
+  <!-- ══ INTRO OVERLAY ══ -->
+  <div id="intro-overlay">
+    <div id="intro-modal">
+      <h2 class="intro-title">⟨ LOGIC ECHO ⟩</h2>
+      <p class="intro-flavour">The Ancient Golem stirs. The Vow binds you.</p>
+      <div class="intro-rules">
+        <div class="rule-item">📋 Draw <strong>5 cards</strong> each turn</div>
+        <div class="rule-item">⚔️ Play up to <strong>3 cards</strong></div>
+        <div class="rule-item">🗑️ Remaining cards are <strong>discarded</strong></div>
+        <div class="rule-item">💀 The Golem has <strong>50 HP</strong> and a pattern — learn it</div>
+      </div>
+      <button id="start-btn" class="btn-primary">Begin the Battle</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+
+</html>
