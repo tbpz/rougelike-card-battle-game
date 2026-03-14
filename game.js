@@ -14,10 +14,15 @@ const CARD_CATALOG = {
     name: 'Strike',
     type: 'attack',
     glyph: '⚔️',
-    effectText: 'Deal 6 damage.',
+    getEffectText: () => 'Deal 6 damage.',
     quantity: 4,
     play(state) {
-      const dmg = Math.floor(6 * (state.player.insightMultiplier));
+      let extraMult = 1;
+      if (globalPlayerBoons.includes('momentum') && state.cardsPlayedThisTurn === 3) {
+        extraMult = 1.5;
+        log(`<span class="log-buff">⚡ Momentum activates! (×1.5 dmg)</span>`);
+      }
+      const dmg = Math.floor(6 * state.player.insightMultiplier * extraMult);
       dealDamageToEnemy(state, dmg);
       log(`⚔️ <span class="log-damage">Strike → ${dmg} damage to the Golem.</span>`);
     },
@@ -27,11 +32,15 @@ const CARD_CATALOG = {
     name: 'Defend',
     type: 'defend',
     glyph: '🛡️',
-    effectText: 'Gain 6 Armor.',
+    getEffectText: () => globalPlayerBoons.includes('spikedArmor') ? 'Gain 6 Armor.<br>Deal 3 damage.' : 'Gain 6 Armor.',
     quantity: 4,
     play(state) {
       state.player.armor += 6;
       log(`🛡️ <span class="log-defend">Defend → +6 Armor. (Total: ${state.player.armor})</span>`);
+      if (globalPlayerBoons.includes('spikedArmor')) {
+        dealDamageToEnemy(state, 3);
+        log(`🛡️ <span class="log-damage">Spiked Armor → 3 damage to Golem.</span>`);
+      }
       updatePlayerUI(state);
     },
   },
@@ -40,14 +49,20 @@ const CARD_CATALOG = {
     name: 'Blood Trade',
     type: 'blood',
     glyph: '💀',
-    effectText: 'Deal 12 dmg. Lose 3 HP.',
+    getEffectText: () => globalPlayerBoons.includes('thickBlood') ? 'Deal 12 dmg. Lose 1 HP.' : 'Deal 12 dmg. Lose 3 HP.',
     quantity: 2,
     play(state) {
-      const dmg = Math.floor(12 * (state.player.insightMultiplier));
+      let extraMult = 1;
+      if (globalPlayerBoons.includes('momentum') && state.cardsPlayedThisTurn === 3) {
+        extraMult = 1.5;
+        log(`<span class="log-buff">⚡ Momentum activates! (×1.5 dmg)</span>`);
+      }
+      const dmg = Math.floor(12 * state.player.insightMultiplier * extraMult);
       dealDamageToEnemy(state, dmg);
-      // True damage to self — ignores armor
-      state.player.hp = Math.max(0, state.player.hp - 3);
-      log(`💀 <span class="log-blood">Blood Trade → ${dmg} damage to Golem, -3 HP to you (true damage).</span>`);
+      
+      const recoil = globalPlayerBoons.includes('thickBlood') ? 1 : 3;
+      state.player.hp = Math.max(0, state.player.hp - recoil);
+      log(`💀 <span class="log-blood">Blood Trade → ${dmg} damage to Golem, -${recoil} HP to you (true damage).</span>`);
       updatePlayerUI(state);
     },
   },
@@ -56,12 +71,17 @@ const CARD_CATALOG = {
     name: 'Insight',
     type: 'buff',
     glyph: '✨',
-    effectText: 'Attack cards deal ×1.5 this turn.',
+    getEffectText: () => globalPlayerBoons.includes('enduringInsight') ? 'Attack cards deal ×1.5 for 2 turns.' : 'Attack cards deal ×1.5 this turn.',
     quantity: 2,
     play(state) {
       state.player.insightMultiplier = 1.5;
+      state.player.insightActiveDuration = globalPlayerBoons.includes('enduringInsight') ? 2 : 1;
       state.player.insightActive = true;
-      log(`✨ <span class="log-buff">Insight → All attacks this turn deal ×1.5!</span>`);
+      if (globalPlayerBoons.includes('enduringInsight')) {
+        log(`✨ <span class="log-buff">Enduring Insight → Attacks deal ×1.5 this turn AND next turn!</span>`);
+      } else {
+        log(`✨ <span class="log-buff">Insight → All attacks this turn deal ×1.5!</span>`);
+      }
       updatePlayerUI(state);
     },
   },
@@ -141,7 +161,16 @@ const LEVELS = [
   }
 ];
 
+const BOONS_CATALOG = {
+  spikedArmor: { name: 'Spiked Armor', glyph: '🛡️', desc: 'Playing [Defend] deals 3 damage to the Golem.' },
+  thickBlood: { name: 'Thick Blood', glyph: '🩸', desc: '[Blood Trade] costs 1 HP instead of 3.' },
+  momentum: { name: 'Momentum', glyph: '⚡', desc: 'The 3rd card played in a turn has a ×1.5 damage multiplier.' },
+  vampiricStrike: { name: 'Vampiric Strike', glyph: '💖', desc: 'If you play exactly 3 [Strike] cards in a turn, heal 3 HP.' },
+  enduringInsight: { name: 'Enduring Insight', glyph: '✨', desc: '[Insight] lasts for two turns instead of one.' },
+};
+
 let globalLevelIndex = 0; // Tracks player progression from 0 to 4
+let globalPlayerBoons = []; // Array of boon IDs acquired
 
 // ─────────────────────────────────────────
 // 3. GAME STATE
@@ -157,6 +186,7 @@ function createInitialState(levelConfig) {
       hp: levelConfig.playerHp,
       armor: 0,
       insightActive: false,
+      insightActiveDuration: 0,
       insightMultiplier: 1,
     },
     enemy: {
@@ -290,8 +320,15 @@ function startTurn(state) {
 
   // Reset player turn-start state
   state.player.armor = 0;
-  state.player.insightActive = false;
-  state.player.insightMultiplier = 1;
+  
+  if (state.player.insightActiveDuration > 0) {
+    state.player.insightActiveDuration--;
+  }
+  
+  if (state.player.insightActiveDuration <= 0) {
+    state.player.insightActive = false;
+    state.player.insightMultiplier = 1;
+  }
 
   // Check enrage at start of player's turn (per PRD: "at the start of its turn")
   checkEnrage(state);
@@ -360,7 +397,7 @@ function endGame(state, playerWon) {
       btn.textContent = 'Next Level ›';
       btn.onclick = () => {
         globalLevelIndex++;
-        showIntroOverlay();
+        showBoonSelection();
         overlay.classList.add('hidden');
       };
     } else {
@@ -371,6 +408,8 @@ function endGame(state, playerWon) {
       btn.textContent = 'Play Again (Reset level 1)';
       btn.onclick = () => {
         globalLevelIndex = 0;
+        globalPlayerBoons = [];
+        updateActiveBoonsUI();
         showIntroOverlay();
         overlay.classList.add('hidden');
       };
@@ -384,6 +423,8 @@ function endGame(state, playerWon) {
     btn.textContent = 'Play Again (Reset level 1)';
     btn.onclick = () => {
       globalLevelIndex = 0;
+      globalPlayerBoons = [];
+      updateActiveBoonsUI();
       showIntroOverlay();
       overlay.classList.add('hidden');
     };
@@ -430,22 +471,30 @@ function playSelectedCards() {
   }
 
   state.selectedCards = [];
-  state.cardsPlayedThisTurn += ordered.length;
+  
+  let strikeCount = 0;
 
   for (const card of ordered) {
+    state.cardsPlayedThisTurn += 1;
+    if (card.id === 'strike') strikeCount++;
+    
     card.play(state);
     updateAllUI(state);
 
     if (checkWin(state)) {
-      // Golem died during player turn
       setTimeout(() => endGame(state, true), 400);
       return;
     }
     if (checkLose(state)) {
-      // Blood Trade self-kill edge case
       setTimeout(() => endGame(state, false), 400);
       return;
     }
+  }
+  
+  if (globalPlayerBoons.includes('vampiricStrike') && ordered.length === 3 && strikeCount === 3) {
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 3);
+    log(`💖 <span class="log-buff">Vampiric Strike → Restored 3 HP!</span>`);
+    updatePlayerUI(state);
   }
 
   renderHand(state);
@@ -472,8 +521,8 @@ function renderHand(state) {
     el.dataset.type = card.type;
     el.style.animationDelay = `${idx * 60}ms`;
     el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', `${card.name}: ${card.effectText}`);
-    el.title = card.effectText;
+    el.setAttribute('aria-label', `${card.name}: ${card.getEffectText()}`);
+    el.title = card.getEffectText();
 
     const badgeHtml = isSelected
       ? `<div class="card-sel-badge">${selOrder + 1}</div>`
@@ -483,7 +532,7 @@ function renderHand(state) {
       ${badgeHtml}
       <div class="card-glyph">${card.glyph}</div>
       <div class="card-name">${card.name}</div>
-      <div class="card-effect">${card.effectText}</div>
+      <div class="card-effect">${card.getEffectText()}</div>
       <div class="card-type-bar"></div>
     `;
 
@@ -657,6 +706,56 @@ function showIntroOverlay() {
   });
   
   overlay.classList.remove('hidden');
+}
+
+function showBoonSelection() {
+  const overlay = document.getElementById('boon-overlay');
+  const container = document.getElementById('boon-options-container');
+  
+  // Pick 2 random boons the player doesn't already have
+  const available = Object.keys(BOONS_CATALOG).filter(k => !globalPlayerBoons.includes(k));
+  const options = shuffle(available).slice(0, 2);
+  
+  if (options.length === 0) {
+    // If we run out of boons, just skip the selection.
+    showIntroOverlay();
+    return;
+  }
+  
+  container.innerHTML = '';
+  options.forEach(boonId => {
+    const boon = BOONS_CATALOG[boonId];
+    const el = document.createElement('div');
+    el.className = 'boon-card';
+    el.innerHTML = `
+      <div class="boon-glyph">${boon.glyph}</div>
+      <div class="boon-name">${boon.name}</div>
+      <div class="boon-desc">${boon.desc}</div>
+    `;
+    el.onclick = () => {
+      globalPlayerBoons.push(boonId);
+      overlay.classList.add('hidden');
+      updateActiveBoonsUI();
+      showIntroOverlay();
+    };
+    container.appendChild(el);
+  });
+  
+  overlay.classList.remove('hidden');
+}
+
+function updateActiveBoonsUI() {
+  const container = document.getElementById('active-boons-list');
+  if (!container) return;
+  container.innerHTML = '';
+  globalPlayerBoons.forEach(bId => {
+    const boon = BOONS_CATALOG[bId];
+    const el = document.createElement('span');
+    el.className = 'active-boon-icon';
+    el.textContent = boon.glyph;
+    el.title = `${boon.name}: ${boon.desc}`;
+    container.appendChild(el);
+  });
 }
 
 function initGame() {

@@ -875,3 +875,109 @@ body {
 #enemy-panel.enraged {
   animation: enrageFlash 1.2s ease infinite;
 }
+
+/* ══════════════════════════════════════════
+   BOONS (RELICS)
+══════════════════════════════════════════ */
+.active-boons-list {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 10px;
+  font-size: 1.2rem;
+  min-height: 25px;
+}
+
+.active-boon-icon {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: help;
+  transition: background 0.2s;
+  color: var(--text-light); /* fallback if no emoji color */
+}
+
+.active-boon-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#boon-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.5s ease;
+}
+
+#boon-modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-panel);
+  padding: 40px 50px;
+  text-align: center;
+  max-width: 600px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 168, 67, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.boon-options {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.boon-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-dim);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  width: 220px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.boon-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.boon-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(212, 168, 67, 0.2), 0 0 0 1px var(--gold);
+  border-color: var(--gold);
+  background: var(--bg-card-hover);
+}
+
+.boon-glyph {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.boon-name {
+  font-family: var(--font-head);
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+}
+
+.boon-desc {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
