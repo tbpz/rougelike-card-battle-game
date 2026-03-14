@@ -20,10 +20,9 @@
   <!-- ══ MAIN GAME SCREEN ══ -->
   <div id="game-screen">
 
-    <!-- Header -->
     <header id="game-header">
       <h1 class="game-title">⟨ LOGIC ECHO ⟩</h1>
-      <p class="subtitle">The 3/5 Vow</p>
+      <p class="subtitle">The 3/5 Vow — Level <span id="level-num">1</span>/5</p>
     </header>
 
     <!-- Battle Arena -->
@@ -36,7 +35,7 @@
           <div class="hp-bar-bg">
             <div class="hp-bar" id="player-hp-bar"></div>
           </div>
-          <div class="hp-text"><span id="player-hp">30</span> / 30 HP</div>
+          <div class="hp-text"><span id="player-hp">--</span> / <span id="player-max-hp">--</span> HP</div>
         </div>
         <div class="status-row">
           <div class="status-badge" id="player-armor-badge">
@@ -61,7 +60,7 @@
           <div class="hp-bar-bg">
             <div class="hp-bar enemy" id="enemy-hp-bar"></div>
           </div>
-          <div class="hp-text"><span id="enemy-hp">50</span> / 50 HP</div>
+          <div class="hp-text"><span id="enemy-hp">--</span> / <span id="enemy-max-hp">--</span> HP</div>
         </div>
         <div class="intent-box" id="intent-box">
           <div class="intent-label">INTENT</div>
@@ -108,18 +107,10 @@
     </div>
   </div>
 
-  <!-- ══ INTRO OVERLAY ══ -->
+  <!-- ══ INTRO OVERLAY (Dynamic Content) ══ -->
   <div id="intro-overlay">
     <div id="intro-modal">
-      <h2 class="intro-title">⟨ LOGIC ECHO ⟩</h2>
-      <p class="intro-flavour">The Ancient Golem stirs. The Vow binds you.</p>
-      <div class="intro-rules">
-        <div class="rule-item">📋 Draw <strong>5 cards</strong> each turn</div>
-        <div class="rule-item">⚔️ Play up to <strong>3 cards</strong></div>
-        <div class="rule-item">🗑️ Remaining cards are <strong>discarded</strong></div>
-        <div class="rule-item">💀 The Golem has <strong>50 HP</strong> and a pattern — learn it</div>
-      </div>
-      <button id="start-btn" class="btn-primary">Begin the Battle</button>
+      <!-- Content populated by JS showIntroOverlay() -->
     </div>
   </div>
 

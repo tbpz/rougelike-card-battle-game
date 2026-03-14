@@ -68,25 +68,101 @@ const CARD_CATALOG = {
 };
 
 // ─────────────────────────────────────────
-// 2. GAME STATE
+// 2. LEVEL CONFIGURATIONS
+// ─────────────────────────────────────────
+const LEVELS = [
+  {
+    title: 'Level 1: The Awakening',
+    flavor: 'The Golem is dormant. Learn the Vow without pressure.',
+    rules: [
+      '🛡️ Extra Defends in deck',
+      '📉 Enemy deals reduced damage',
+      '⏱️ Safe "Recharge" turn every 3rd turn',
+      '💤 Enrages at 10 HP'
+    ],
+    playerHp: 35, enemyHp: 35,
+    cycle: ['bash', 'shatter', 'recharge'],
+    bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 10,
+    deck: { strike: 4, defend: 5, bloodTrade: 2, insight: 2 }
+  },
+  {
+    title: 'Level 2: Calibrated Pressure',
+    flavor: 'The original Vow. Block carefully or be broken.',
+    rules: [
+      '⚖️ Standard 3/5 Vow deck ratios',
+      '💥 Shatter requires 2 Defends to block fully',
+      '⏱️ Safe "Recharge" turn every 3rd turn',
+      '⚡ Enrages at 15 HP'
+    ],
+    playerHp: 30, enemyHp: 50,
+    cycle: ['bash', 'shatter', 'recharge'],
+    bashDmg: 8, shatterDmg: 12, enrageAt: 15, fatalDmg: 15,
+    deck: { strike: 4, defend: 4, bloodTrade: 2, insight: 2 }
+  },
+  {
+    title: 'Level 3: The Relentless',
+    flavor: 'The Golem abandons rest. You must find your own openings.',
+    rules: [
+      '🚫 No "Recharge" turn (Bash → Shatter → Bash)',
+      '🩸 1 fewer Blood Trade in deck',
+      '⚠️ Enrages earlier (at 20 HP)'
+    ],
+    playerHp: 28, enemyHp: 55,
+    cycle: ['bash', 'shatter', 'bash'],
+    bashDmg: 9, shatterDmg: 14, enrageAt: 20, fatalDmg: 16,
+    deck: { strike: 4, defend: 4, bloodTrade: 1, insight: 2 }
+  },
+  {
+    title: 'Level 4: Iron Vow',
+    flavor: 'The deck floods with blood. Pain is your only fuel.',
+    rules: [
+      '💀 Deck replaced: Heavy Blood Trade (+3 self-damage)',
+      '🗡️ Start at only 25 Max HP',
+      '🔥 Enrages very early (at 25 HP)'
+    ],
+    playerHp: 25, enemyHp: 60,
+    cycle: ['bash', 'shatter', 'bash'],
+    bashDmg: 10, shatterDmg: 15, enrageAt: 25, fatalDmg: 18,
+    deck: { strike: 3, defend: 3, bloodTrade: 3, insight: 2 }
+  },
+  {
+    title: 'Level 5: The Final Vow',
+    flavor: 'The absolute limit of the Vow. One mistake is fatal.',
+    rules: [
+      '✨ Volatile Deck: 4 Insights, only 2 Defends',
+      '💔 Start at bare minimum 22 Max HP',
+      '☠️ Enrages at 30 HP (over half health!)',
+      '🏴‍☠️ Fatal Strike deals 20 damage'
+    ],
+    playerHp: 22, enemyHp: 65,
+    cycle: ['bash', 'shatter', 'bash'],
+    bashDmg: 11, shatterDmg: 16, enrageAt: 30, fatalDmg: 20,
+    deck: { strike: 3, defend: 2, bloodTrade: 3, insight: 4 }
+  }
+];
+
+let globalLevelIndex = 0; // Tracks player progression from 0 to 4
+
+// ─────────────────────────────────────────
+// 3. GAME STATE
 // ─────────────────────────────────────────
 let state = {};
 
-function createInitialState() {
+function createInitialState(levelConfig) {
   return {
     turn: 1,
     phase: 'player',   // 'player' | 'enemy' | 'over'
     player: {
-      maxHp: 30,
-      hp: 30,
+      maxHp: levelConfig.playerHp,
+      hp: levelConfig.playerHp,
       armor: 0,
       insightActive: false,
       insightMultiplier: 1,
     },
     enemy: {
-      maxHp: 50,
-      hp: 50,
-      turnIndex: 0,   // 0=Bash, 1=Shatter, 2=Recharge
+      maxHp: levelConfig.enemyHp,
+      hp: levelConfig.enemyHp,
+      turnIndex: 0,
       enraged: false,
     },
     deck: {
@@ -95,18 +171,21 @@ function createInitialState() {
       hand: [],
     },
     cardsPlayedThisTurn: 0,
-    selectedCards: [],   // indices into hand[]
+    selectedCards: [],
   };
 }
 
 // ─────────────────────────────────────────
-// 3. DECK MANAGEMENT
+// 4. DECK MANAGEMENT
 // ─────────────────────────────────────────
-function buildDeck() {
+function buildDeck(levelConfig) {
   const deck = [];
-  for (const [, card] of Object.entries(CARD_CATALOG)) {
-    for (let i = 0; i < card.quantity; i++) {
-      deck.push({ ...card });
+  const reqs = levelConfig.deck;
+  
+  for (const [id, count] of Object.entries(reqs)) {
+    const cardProto = CARD_CATALOG[id];
+    for (let i = 0; i < count; i++) {
+        deck.push({ ...cardProto });
     }
   }
   return deck;
@@ -140,20 +219,25 @@ function discardHand(state) {
 }
 
 // ─────────────────────────────────────────
-// 4. ENEMY AI
+// 5. ENEMY AI
 // ─────────────────────────────────────────
-const INTENTS = {
-  bash: { name: 'Bash', damage: 8, icon: '⚡', type: 'normal' },
-  shatter: { name: 'Shatter', damage: 12, icon: '💥', type: 'normal' },
-  recharge: { name: 'Recharge', damage: 0, icon: '⚙️', type: 'safe' },
-  fatalStrike: { name: 'Fatal Strike', damage: 15, icon: '☠️', type: 'enrage' },
-};
-
-const INTENT_CYCLE = ['bash', 'shatter', 'recharge'];
+function getLevelIntents(levelConfig) {
+  return {
+    bash: { name: 'Bash', damage: levelConfig.bashDmg, icon: '⚡', type: 'normal' },
+    shatter: { name: 'Shatter', damage: levelConfig.shatterDmg, icon: '💥', type: 'normal' },
+    recharge: { name: 'Recharge', damage: 0, icon: '⚙️', type: 'safe' },
+    fatalStrike: { name: 'Fatal Strike', damage: levelConfig.fatalDmg, icon: '☠️', type: 'enrage' },
+  };
+}
 
 function getIntent(state) {
-  if (state.enemy.enraged) return INTENTS.fatalStrike;
-  return INTENTS[INTENT_CYCLE[state.enemy.turnIndex % 3]];
+  const levelConfig = LEVELS[globalLevelIndex];
+  const intents = getLevelIntents(levelConfig);
+  
+  if (state.enemy.enraged) return intents.fatalStrike;
+  
+  const intentKey = levelConfig.cycle[state.enemy.turnIndex % levelConfig.cycle.length];
+  return intents[intentKey];
 }
 
 function enemyAct(state) {
@@ -177,7 +261,8 @@ function enemyAct(state) {
 }
 
 function checkEnrage(state) {
-  if (!state.enemy.enraged && state.enemy.hp <= 15) {
+  const levelConfig = LEVELS[globalLevelIndex];
+  if (!state.enemy.enraged && state.enemy.hp <= levelConfig.enrageAt) {
     state.enemy.enraged = true;
     log(`<span class="log-blood">☠️ The Golem ENRAGES! Fatal Strike every turn!</span>`);
     document.getElementById('enemy-panel').classList.add('enraged');
@@ -186,7 +271,7 @@ function checkEnrage(state) {
 }
 
 // ─────────────────────────────────────────
-// 5. WIN / LOSE CHECKS
+// 6. WIN / LOSE CHECKS
 // ─────────────────────────────────────────
 function checkWin(state) {
   return state.enemy.hp <= 0;
@@ -196,7 +281,7 @@ function checkLose(state) {
 }
 
 // ─────────────────────────────────────────
-// 6. GAME LOOP
+// 7. GAME LOOP
 // ─────────────────────────────────────────
 function startTurn(state) {
   state.phase = 'player';
@@ -261,23 +346,52 @@ function endGame(state, playerWon) {
   const icon = document.getElementById('result-icon');
   const title = document.getElementById('result-title');
   const msg = document.getElementById('result-message');
+  const btn = document.getElementById('restart-btn');
 
   overlay.classList.remove('hidden');
+
   if (playerWon) {
     icon.textContent = '🏆';
-    title.textContent = 'Victory!';
-    title.className = 'win';
-    msg.textContent = `The Ancient Golem crumbles to dust. You survived ${state.turn} turns.`;
+    if (globalLevelIndex < LEVELS.length - 1) {
+      title.textContent = 'Victory!';
+      title.className = 'win';
+      msg.textContent = `The Golem's form shatters, but it begins to reassemble into something stronger... You survived ${state.turn} turns.`;
+      
+      btn.textContent = 'Next Level ›';
+      btn.onclick = () => {
+        globalLevelIndex++;
+        showIntroOverlay();
+        overlay.classList.add('hidden');
+      };
+    } else {
+      title.textContent = 'True Victory!';
+      title.className = 'win true-win';
+      msg.textContent = `You have broken the Final Vow. The Ancient Golem is no more. You are absolute.`;
+      
+      btn.textContent = 'Play Again (Reset level 1)';
+      btn.onclick = () => {
+        globalLevelIndex = 0;
+        showIntroOverlay();
+        overlay.classList.add('hidden');
+      };
+    }
   } else {
     icon.textContent = '💀';
     title.textContent = 'Defeated.';
     title.className = 'lose';
-    msg.textContent = `The Golem's power overwhelms you. The Vow remains unbroken. Try again.`;
+    msg.textContent = `The Golem's power overwhelms you. The Vow remains unbroken.`;
+    
+    btn.textContent = 'Play Again (Reset level 1)';
+    btn.onclick = () => {
+      globalLevelIndex = 0;
+      showIntroOverlay();
+      overlay.classList.add('hidden');
+    };
   }
 }
 
 // ─────────────────────────────────────────
-// 7. CARD PLAY LOGIC
+// 8. CARD PLAY LOGIC
 // ─────────────────────────────────────────
 function toggleCardSelection(handIndex) {
   if (state.phase !== 'player') return;
@@ -342,7 +456,7 @@ function playSelectedCards() {
 }
 
 // ─────────────────────────────────────────
-// 8. UI RENDERING
+// 9. UI RENDERING
 // ─────────────────────────────────────────
 function renderHand(state) {
   const container = document.getElementById('hand-container');
@@ -386,6 +500,7 @@ function updatePlayerUI(state) {
   const pct = Math.max(0, p.hp / p.maxHp * 100);
 
   document.getElementById('player-hp').textContent = p.hp;
+  document.getElementById('player-max-hp').textContent = p.maxHp;
   const bar = document.getElementById('player-hp-bar');
   bar.style.width = pct + '%';
   if (pct > 50) { bar.className = 'hp-bar'; }
@@ -409,6 +524,7 @@ function updateEnemyUI(state) {
   const pct = Math.max(0, e.hp / e.maxHp * 100);
 
   document.getElementById('enemy-hp').textContent = Math.max(0, e.hp);
+  document.getElementById('enemy-max-hp').textContent = e.maxHp;
   const bar = document.getElementById('enemy-hp-bar');
   bar.style.width = pct + '%';
 
@@ -439,12 +555,17 @@ function updateTurnCounter(state) {
   document.getElementById('turn-num').textContent = state.turn;
 }
 
+function updateLevelCounter() {
+  document.getElementById('level-num').textContent = globalLevelIndex + 1;
+}
+
 function updateAllUI(state) {
   updatePlayerUI(state);
   updateEnemyUI(state);
   updateDeckUI(state);
   updatePlayCounter(state);
   updateTurnCounter(state);
+  updateLevelCounter();
   renderHand(state);
   updatePlaySelectedBtn();
   updateEndTurnBtn();
@@ -469,7 +590,7 @@ function updatePlaySelectedBtn() {
 }
 
 // ─────────────────────────────────────────
-// 9. LOGGING
+// 10. LOGGING
 // ─────────────────────────────────────────
 let logEl;
 
@@ -491,7 +612,7 @@ function logTurnHeader(turn, intent) {
 }
 
 // ─────────────────────────────────────────
-// 10. EFFECTS
+// 11. EFFECTS
 // ─────────────────────────────────────────
 function triggerShake() {
   const arena = document.getElementById('battle-arena');
@@ -508,14 +629,48 @@ function dealDamageToEnemy(state, dmg) {
 }
 
 // ─────────────────────────────────────────
-// 11. BOOTSTRAP
+// 12. BOOTSTRAP TO LEVEL
 // ─────────────────────────────────────────
-function initGame() {
-  logEl = document.getElementById('turn-log');
-  logEl.innerHTML = '';
+function showIntroOverlay() {
+  const overlay = document.getElementById('intro-overlay');
+  const levelConfig = LEVELS[globalLevelIndex];
+  
+  // Format the rules nicely
+  const rulesHtml = levelConfig.rules.map(r => `<div class="rule-item">${r}</div>`).join('');
+  
+  // Create or update the modal content safely
+  const modal = document.getElementById('intro-modal');
+  modal.innerHTML = `
+    <h2 class="intro-title">${levelConfig.title}</h2>
+    <p class="intro-flavour">${levelConfig.flavor}</p>
+    <div class="intro-rules">
+      ${globalLevelIndex === 0 ? `<div class="rule-item" style="color:#aaa;"><em>Reminder: You draw 5 cards, but may only play 3.</em></div>` : ''}
+      ${rulesHtml}
+    </div>
+    <button id="start-btn" class="btn-primary">Begin the Battle</button>
+  `;
+  
+  // Reattach listener since we nuked the innerHTML
+  document.getElementById('start-btn').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    initGame();
+  });
+  
+  overlay.classList.remove('hidden');
+}
 
-  state = createInitialState();
-  state.deck.drawPile = shuffle(buildDeck());
+function initGame() {
+  const levelConfig = LEVELS[globalLevelIndex];
+  
+  logEl = document.getElementById('turn-log');
+  logEl.innerHTML = `
+    <div class="log-entry" style="color: #64ffda; text-align: center; margin-bottom: 8px;">
+      :: Beginning ${levelConfig.title} ::
+    </div>
+  `;
+
+  state = createInitialState(levelConfig);
+  state.deck.drawPile = shuffle(buildDeck(levelConfig));
 
   // Reset enemy enrage visual
   document.getElementById('enemy-panel').classList.remove('enraged');
@@ -525,7 +680,7 @@ function initGame() {
 }
 
 // ─────────────────────────────────────────
-// 12. EVENT LISTENERS
+// 13. EVENT LISTENERS
 // ─────────────────────────────────────────
 document.getElementById('play-selected-btn').addEventListener('click', () => {
   if (state.phase !== 'player') return;
@@ -539,11 +694,10 @@ document.getElementById('end-turn-btn').addEventListener('click', () => {
   endTurn(state);
 });
 
-document.getElementById('start-btn').addEventListener('click', () => {
-  document.getElementById('intro-overlay').classList.add('hidden');
-  initGame();
-});
+// Remove old static start-btn listener as showIntroOverlay sets it per level.
+// Remove direct restart-btn listener as endGame sets it per result.
 
-document.getElementById('restart-btn').addEventListener('click', () => {
-  initGame();
+// Kick off
+window.addEventListener('DOMContentLoaded', () => {
+  showIntroOverlay();
 });
