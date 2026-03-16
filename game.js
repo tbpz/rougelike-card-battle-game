@@ -14,7 +14,13 @@ const CARD_CATALOG = {
     name: 'Strike',
     type: 'attack',
     glyph: '⚔️',
-    getEffectText: () => 'Deal 6 damage.',
+    getEffectText: () => {
+      let dmg = 6;
+      if (typeof state !== 'undefined' && state.player && globalPlayerBoons.includes('bloodlust') && state.player.hp <= (state.player.maxHp * 0.5)) {
+        dmg += 3;
+      }
+      return `Deal ${dmg} damage.`;
+    },
     quantity: 4,
     play(state) {
       let extraMult = 1;
@@ -22,7 +28,9 @@ const CARD_CATALOG = {
         extraMult = 1.5;
         log(`<span class="log-buff">⚡ Momentum activates! (×1.5 dmg)</span>`);
       }
-      const dmg = Math.floor(6 * state.player.insightMultiplier * extraMult);
+      const isBloodlust = globalPlayerBoons.includes('bloodlust') && (state.player.hp <= state.player.maxHp * 0.5);
+      const extraBase = isBloodlust ? 3 : 0;
+      const dmg = Math.floor((6 + extraBase) * state.player.insightMultiplier * extraMult);
       dealDamageToEnemy(state, dmg);
       log(`⚔️ <span class="log-damage">Strike → ${dmg} damage to the Golem.</span>`);
     },
@@ -32,11 +40,20 @@ const CARD_CATALOG = {
     name: 'Defend',
     type: 'defend',
     glyph: '🛡️',
-    getEffectText: () => globalPlayerBoons.includes('spikedArmor') ? 'Gain 6 Armor.<br>Deal 3 damage.' : 'Gain 6 Armor.',
+    getEffectText: () => {
+      const armor = globalPlayerBoons.includes('fortress') ? 8 : 6;
+      let text = `Gain ${armor} Armor.`;
+      if (globalPlayerBoons.includes('spikedArmor')) {
+        text += '<br>Deal 3 damage.';
+      }
+      return text;
+    },
     quantity: 4,
     play(state) {
-      state.player.armor += 6;
-      log(`🛡️ <span class="log-defend">Defend → +6 Armor. (Total: ${state.player.armor})</span>`);
+      const isFortress = globalPlayerBoons.includes('fortress');
+      const armorGain = isFortress ? 8 : 6;
+      state.player.armor += armorGain;
+      log(`🛡️ <span class="log-defend">Defend → +${armorGain} Armor. (Total: ${state.player.armor})</span>`);
       if (globalPlayerBoons.includes('spikedArmor')) {
         dealDamageToEnemy(state, 3);
         log(`🛡️ <span class="log-damage">Spiked Armor → 3 damage to Golem.</span>`);
@@ -49,7 +66,11 @@ const CARD_CATALOG = {
     name: 'Blood Trade',
     type: 'blood',
     glyph: '💀',
-    getEffectText: () => globalPlayerBoons.includes('thickBlood') ? 'Deal 12 dmg. Lose 1 HP.' : 'Deal 12 dmg. Lose 3 HP.',
+    getEffectText: () => {
+      const dmg = globalPlayerBoons.includes('hemorrhage') ? 16 : 12;
+      const hpLoss = globalPlayerBoons.includes('thickBlood') ? 1 : 3;
+      return `Deal ${dmg} dmg. Lose ${hpLoss} HP.`;
+    },
     quantity: 2,
     play(state) {
       let extraMult = 1;
@@ -57,12 +78,18 @@ const CARD_CATALOG = {
         extraMult = 1.5;
         log(`<span class="log-buff">⚡ Momentum activates! (×1.5 dmg)</span>`);
       }
-      const dmg = Math.floor(12 * state.player.insightMultiplier * extraMult);
+      const extraBase = globalPlayerBoons.includes('hemorrhage') ? 4 : 0;
+      const dmg = Math.floor((12 + extraBase) * state.player.insightMultiplier * extraMult);
       dealDamageToEnemy(state, dmg);
       
       const recoil = globalPlayerBoons.includes('thickBlood') ? 1 : 3;
       state.player.hp = Math.max(0, state.player.hp - recoil);
       log(`💀 <span class="log-blood">Blood Trade → ${dmg} damage to Golem, -${recoil} HP to you (true damage).</span>`);
+      if (recoil > 0 && globalPlayerBoons.includes('warTax')) {
+        dealDamageToEnemy(state, 2);
+        log(`⚖️ <span class="log-damage">War Tax → 2 damage returned to Golem!</span>`);
+      }
+      applyLastRitesIfNeeded(state);
       updatePlayerUI(state);
     },
   },
@@ -74,13 +101,13 @@ const CARD_CATALOG = {
     getEffectText: () => globalPlayerBoons.includes('enduringInsight') ? 'Attack cards deal ×1.5 for 2 turns.' : 'Attack cards deal ×1.5 this turn.',
     quantity: 2,
     play(state) {
-      state.player.insightMultiplier = 1.5;
+      state.player.insightMultiplier *= 1.5;
       state.player.insightActiveDuration = globalPlayerBoons.includes('enduringInsight') ? 2 : 1;
       state.player.insightActive = true;
       if (globalPlayerBoons.includes('enduringInsight')) {
-        log(`✨ <span class="log-buff">Enduring Insight → Attacks deal ×1.5 this turn AND next turn!</span>`);
+        log(`✨ <span class="log-buff">Enduring Insight → Attacks deal ×1.5 this turn AND next turn! (Mult: ${state.player.insightMultiplier.toFixed(2)})</span>`);
       } else {
-        log(`✨ <span class="log-buff">Insight → All attacks this turn deal ×1.5!</span>`);
+        log(`✨ <span class="log-buff">Insight → All attacks this turn deal ×1.5! (Mult: ${state.player.insightMultiplier.toFixed(2)})</span>`);
       }
       updatePlayerUI(state);
     },
@@ -161,16 +188,35 @@ const LEVELS = [
   }
 ];
 
+const ARCHETYPES = {
+  berserker: { id: 'berserker', name: 'Berserker', glyph: '⚔️', desc: 'Embrace aggression. Boons favor striking hard and living on the edge.' },
+  bloodPriest: { id: 'bloodPriest', name: 'Blood Priest', glyph: '🩸', desc: 'Embrace sacrifice. Boons favor massive damage spikes and self-harm.' },
+  ironSentinel: { id: 'ironSentinel', name: 'Iron Sentinel', glyph: '🛡️', desc: 'Embrace endurance. Boons favor impenetrable armor and counter-attacks.' }
+};
+
 const BOONS_CATALOG = {
-  spikedArmor: { name: 'Spiked Armor', glyph: '🛡️', desc: 'Playing [Defend] deals 3 damage to the Golem.' },
-  thickBlood: { name: 'Thick Blood', glyph: '🩸', desc: '[Blood Trade] costs 1 HP instead of 3.' },
-  momentum: { name: 'Momentum', glyph: '⚡', desc: 'The 3rd card played in a turn has a ×1.5 damage multiplier.' },
-  vampiricStrike: { name: 'Vampiric Strike', glyph: '💖', desc: 'If you play exactly 3 [Strike] cards in a turn, heal 3 HP.' },
-  enduringInsight: { name: 'Enduring Insight', glyph: '✨', desc: '[Insight] lasts for two turns instead of one.' },
+  // Berserker
+  momentum: { archetype: 'berserker', name: 'Momentum', glyph: '⚡', desc: 'The 3rd card played in a turn has a ×1.5 damage multiplier.' },
+  vampiricStrike: { archetype: 'berserker', name: 'Vampiric Strike', glyph: '💖', desc: 'If you play exactly 3 [Strike] cards in a turn, heal 3 HP.' },
+  bloodlust: { archetype: 'berserker', name: 'Bloodlust', glyph: '🔥', desc: '[Strike] deals +3 damage if your HP is at or below 50%.' },
+  warTax: { archetype: 'berserker', name: 'War Tax', glyph: '⚖️', desc: 'Every time you lose HP, deal 2 damage to the Golem.' },
+  
+  // Blood Priest
+  thickBlood: { archetype: 'bloodPriest', name: 'Thick Blood', glyph: '🩸', desc: '[Blood Trade] costs 1 HP instead of 3.' },
+  enduringInsight: { archetype: 'bloodPriest', name: 'Enduring Insight', glyph: '✨', desc: '[Insight] lasts for two turns instead of one.' },
+  hemorrhage: { archetype: 'bloodPriest', name: 'Hemorrhage', glyph: '🥀', desc: '[Blood Trade] deals +4 damage.' },
+  lastRites: { archetype: 'bloodPriest', name: 'Last Rites', glyph: '⚰️', desc: 'Once per run, survive a killing blow at 1 HP.' },
+  
+  // Iron Sentinel
+  spikedArmor: { archetype: 'ironSentinel', name: 'Spiked Armor', glyph: '🛡️', desc: 'Playing [Defend] deals 3 damage to the Golem.' },
+  fortress: { archetype: 'ironSentinel', name: 'Fortress', glyph: '🏰', desc: '[Defend] grants 8 Armor instead of 6.' },
+  thorns: { archetype: 'ironSentinel', name: 'Thorns', glyph: '🌵', desc: 'Whenever you lose HP to an enemy attack, deal 3 damage to the Golem.' },
+  grit: { archetype: 'ironSentinel', name: 'Grit', glyph: '💪', desc: 'At the start of each turn, gain 3 Armor.' },
 };
 
 let globalLevelIndex = 0; // Tracks player progression from 0 to 4
 let globalPlayerBoons = []; // Array of boon IDs acquired
+let globalConsumedBoons = []; // Array of boon IDs that were single-use and consumed
 
 // ─────────────────────────────────────────
 // 3. GAME STATE
@@ -282,11 +328,32 @@ function enemyAct(state) {
     } else {
       log(`<span class="log-enemy">💥 Golem uses ${intent.name} for ${intent.damage} damage!</span>`);
     }
+    
+    if (realDamage > 0 && globalPlayerBoons.includes('thorns')) {
+      dealDamageToEnemy(state, 3);
+      log(`🌵 <span class="log-damage">Thorns → 3 damage returned to Golem!</span>`);
+    }
+    if (realDamage > 0 && globalPlayerBoons.includes('warTax')) {
+      dealDamageToEnemy(state, 2);
+      log(`⚖️ <span class="log-damage">War Tax → 2 damage returned to Golem!</span>`);
+    }
   } else {
     log(`<span class="log-system">⚙️ Golem recharges. Nothing happens.</span>`);
   }
+  
+  applyLastRitesIfNeeded(state);
+
   if (!state.enemy.enraged) {
     state.enemy.turnIndex++;
+  }
+}
+
+function applyLastRitesIfNeeded(state) {
+  if (state.player.hp <= 0 && globalPlayerBoons.includes('lastRites') && !globalConsumedBoons.includes('lastRites')) {
+    state.player.hp = 1;
+    globalConsumedBoons.push('lastRites');
+    log(`⚰️ <span class="log-buff">Last Rites activates! You survive at 1 HP!</span>`);
+    updateActiveBoonsUI();
   }
 }
 
@@ -320,6 +387,11 @@ function startTurn(state) {
 
   // Reset player turn-start state
   state.player.armor = 0;
+  
+  if (globalPlayerBoons.includes('grit')) {
+    state.player.armor += 3;
+    log(`💪 <span class="log-defend">Grit → +3 Armor at start of turn.</span>`);
+  }
   
   if (state.player.insightActiveDuration > 0) {
     state.player.insightActiveDuration--;
@@ -409,6 +481,7 @@ function endGame(state, playerWon) {
       btn.onclick = () => {
         globalLevelIndex = 0;
         globalPlayerBoons = [];
+        globalConsumedBoons = [];
         updateActiveBoonsUI();
         showIntroOverlay();
         overlay.classList.add('hidden');
@@ -424,6 +497,7 @@ function endGame(state, playerWon) {
     btn.onclick = () => {
       globalLevelIndex = 0;
       globalPlayerBoons = [];
+      globalConsumedBoons = [];
       updateActiveBoonsUI();
       showIntroOverlay();
       overlay.classList.add('hidden');
@@ -462,7 +536,7 @@ function playSelectedCards() {
   const played = toPlay.map(i => state.deck.hand[i]);
 
   // Apply effects in the ORDER the player selected them (reconstruction)
-  const ordered = [...state.selectedCards].sort((a, b) => a - b).map(i => state.deck.hand[i]);
+  const ordered = state.selectedCards.map(i => state.deck.hand[i]);
 
   // Remove from hand (reverse order to preserve indices)
   for (const i of toPlay) {
@@ -712,8 +786,11 @@ function showBoonSelection() {
   const overlay = document.getElementById('boon-overlay');
   const container = document.getElementById('boon-options-container');
   
-  // Pick 2 random boons the player doesn't already have
-  const available = Object.keys(BOONS_CATALOG).filter(k => !globalPlayerBoons.includes(k));
+  // Pick boons that player doesn't have from the entire pool
+  let available = Object.keys(BOONS_CATALOG).filter(k => 
+    !globalPlayerBoons.includes(k)
+  );
+  
   const options = shuffle(available).slice(0, 2);
   
   if (options.length === 0) {
@@ -752,6 +829,9 @@ function updateActiveBoonsUI() {
     const boon = BOONS_CATALOG[bId];
     const el = document.createElement('span');
     el.className = 'active-boon-icon';
+    if (globalConsumedBoons.includes(bId)) {
+      el.classList.add('consumed');
+    }
     el.textContent = boon.glyph;
     el.title = `${boon.name}: ${boon.desc}`;
     container.appendChild(el);

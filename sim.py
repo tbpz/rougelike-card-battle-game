@@ -25,6 +25,9 @@ def simulate():
             if not enraged and enemy_hp <= enrage_threshold:
                 enraged = True
             
+            # Reset consumed boons for this simulated fight (though Last Rites is once per run, sim.py tests individual fights)
+            consumed_last_rites = False
+            
             intent_dmg = 18 if enraged else cycle[turn_index]
             
             # Draw 5
@@ -65,8 +68,12 @@ def simulate():
                         temp_e_hp -= dmg
                         
                     if temp_p_hp <= 0:
-                        dead = True
-                        break
+                        if not consumed_last_rites:
+                            temp_p_hp = 1
+                            consumed_last_rites = True
+                        else:
+                            dead = True
+                            break
                         
                 if dead:
                     continue
@@ -75,9 +82,18 @@ def simulate():
                 real_dmg = intent_dmg - blocked
                 temp_p_hp -= real_dmg
                 
-                if temp_p_hp <= 0 and temp_e_hp > 0:
-                    score = -5000 + temp_e_hp # Died
-                elif temp_e_hp <= 0:
+                if temp_p_hp <= 0:
+                    if not consumed_last_rites:
+                        temp_p_hp = 1
+                        consumed_last_rites = True
+                    else:
+                        score = -5000 + temp_e_hp # Died
+                        if score > best_score:
+                            best_score = score
+                            best_combo = combo
+                        continue
+                        
+                if temp_e_hp <= 0:
                     score = 10000 + temp_p_hp # Won
                 else:
                     # Survival score -> Balance between dealing damage and keeping HP
