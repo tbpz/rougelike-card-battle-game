@@ -126,7 +126,21 @@
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <!-- ── Data layer (pure definitions, no logic) ── -->
+  <script src="js/data/levels.js"></script>
+  <script src="js/data/boons.js"></script>
+  <script src="js/data/enemies.js"></script>
+  <script src="js/data/cards.js"></script>
+  <!-- ── Engine layer (game logic, no DOM) ── -->
+  <script src="js/engine/state.js"></script>
+  <script src="js/engine/deckManager.js"></script>
+  <script src="js/engine/logger.js"></script>
+  <script src="js/engine/effectBus.js"></script>
+  <script src="js/engine/combatEngine.js"></script>
+  <!-- ── UI layer (reads state, writes DOM) ── -->
+  <script src="js/ui/renderer.js"></script>
+  <!-- ── Entry point (event listeners & bootstrap) ── -->
+  <script src="js/main.js"></script>
 </body>
 
 </html>

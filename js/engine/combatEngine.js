@@ -1,0 +1,278 @@
+'use strict';
+
+/* ══════════════════════════════════════════
+   ENGINE — Combat Engine
+   Orchestrates the game loop: turns, enemy AI,
+   card play logic, and win/loss evaluation.
+   Reads state, calls effectBus for mutations,
+   calls renderer for UI updates. No direct DOM access.
+══════════════════════════════════════════ */
+
+// ─── Win / Lose Conditions ─────────────────────────────
+function checkWin(state)  { return state.enemy.hp <= 0; }
+function checkLose(state) { return state.player.hp <= 0; }
+
+// ─── Enemy AI ──────────────────────────────────────────
+
+/**
+ * Resolves the current enemy intent based on state.
+ * @param {object} state
+ * @returns {object} Intent definition object
+ */
+function getIntent(state) {
+  const levelConfig = LEVELS[globalLevelIndex];
+  const intents     = getLevelIntents(levelConfig);
+  if (state.enemy.enraged) return intents.fatalStrike;
+  const intentKey = levelConfig.cycle[state.enemy.turnIndex % levelConfig.cycle.length];
+  return intents[intentKey];
+}
+
+/**
+ * Checks and activates enrage if the HP threshold is met.
+ * @param {object} state
+ */
+function checkEnrage(state) {
+  const levelConfig = LEVELS[globalLevelIndex];
+  if (!state.enemy.enraged && state.enemy.hp <= levelConfig.enrageAt) {
+    state.enemy.enraged = true;
+    log(`<span class="log-blood">☠️ The Golem ENRAGES! Fatal Strike every turn!</span>`);
+    document.getElementById('enemy-panel').classList.add('enraged');
+    triggerShake();
+  }
+}
+
+/**
+ * Executes the enemy's turn: applies damage/effects and advances turn index.
+ * @param {object} state
+ */
+function enemyAct(state) {
+  const intent = getIntent(state);
+  if (intent.damage > 0) {
+    applyEnemyAttackDamage(state, intent);
+  } else {
+    log(`<span class="log-system">⚙️ Golem recharges. Nothing happens.</span>`);
+  }
+
+  applyLastRitesIfNeeded(state);
+
+  if (!state.enemy.enraged) {
+    state.enemy.turnIndex++;
+  }
+}
+
+// ─── Turn Flow ─────────────────────────────────────────
+
+/**
+ * Starts a new player turn: reset turn state, apply start-of-turn boons,
+ * draw cards, log intent header, update UI.
+ * @param {object} state
+ */
+function startTurn(state) {
+  state.phase              = 'player';
+  state.cardsPlayedThisTurn = 0;
+  state.selectedCards      = [];
+
+  // Reset armor each turn
+  state.player.armor = 0;
+
+  // Grit: free armor at turn start
+  if (globalPlayerBoons.includes('grit')) {
+    state.player.armor += 3;
+    log(`💪 <span class="log-defend">Grit → +3 Armor at start of turn.</span>`);
+  }
+
+  // Tick down Insight duration
+  if (state.player.insightActiveDuration > 0) {
+    state.player.insightActiveDuration--;
+  }
+  if (state.player.insightActiveDuration <= 0) {
+    state.player.insightActive     = false;
+    state.player.insightMultiplier = 1;
+  }
+
+  // Check enrage at start of player turn (per PRD)
+  checkEnrage(state);
+
+  // Draw 5 cards
+  drawCards(state, 5);
+
+  // Log turn header with current intent
+  const intent = getIntent(state);
+  logTurnHeader(state.turn, intent);
+
+  // Keep End Turn locked until 3 cards have been played
+  document.getElementById('end-turn-btn').disabled = true;
+  updatePlaySelectedBtn();
+
+  updateAllUI(state);
+}
+
+/**
+ * Ends the player turn: discard hand, check win, run enemy phase, start next turn.
+ * @param {object} state
+ */
+function endTurn(state) {
+  if (state.phase !== 'player') return;
+  state.phase = 'enemy';
+
+  discardHand(state);
+  state.selectedCards = [];
+
+  // Check win before enemy acts (player may have killed Golem this turn)
+  if (checkWin(state)) {
+    endGame(state, true);
+    return;
+  }
+
+  // Enemy acts after a short delay for readability
+  setTimeout(() => {
+    enemyAct(state);
+    updateAllUI(state);
+
+    if (checkLose(state)) {
+      endGame(state, false);
+      return;
+    }
+
+    state.turn++;
+    setTimeout(() => startTurn(state), 600);
+  }, 500);
+}
+
+/**
+ * Transitions to the end-game screen (win or lose).
+ * @param {object} state
+ * @param {boolean} playerWon
+ */
+function endGame(state, playerWon) {
+  state.phase = 'over';
+  const overlay = document.getElementById('result-overlay');
+  const icon    = document.getElementById('result-icon');
+  const title   = document.getElementById('result-title');
+  const msg     = document.getElementById('result-message');
+  const btn     = document.getElementById('restart-btn');
+
+  overlay.classList.remove('hidden');
+
+  if (playerWon) {
+    icon.textContent = '🏆';
+    if (globalLevelIndex < LEVELS.length - 1) {
+      title.textContent = 'Victory!';
+      title.className   = 'win';
+      msg.textContent   = `The Golem's form shatters, but it begins to reassemble into something stronger... You survived ${state.turn} turns.`;
+      btn.textContent   = 'Next Level ›';
+      btn.onclick = () => {
+        globalLevelIndex++;
+        showBoonSelection();
+        overlay.classList.add('hidden');
+      };
+    } else {
+      title.textContent = 'True Victory!';
+      title.className   = 'win true-win';
+      msg.textContent   = `You have broken the Final Vow. The Ancient Golem is no more. You are absolute.`;
+      btn.textContent   = 'Play Again (Reset level 1)';
+      btn.onclick = () => {
+        globalLevelIndex    = 0;
+        globalPlayerBoons   = [];
+        globalConsumedBoons = [];
+        updateActiveBoonsUI();
+        showIntroOverlay();
+        overlay.classList.add('hidden');
+      };
+    }
+  } else {
+    icon.textContent  = '💀';
+    title.textContent = 'Defeated.';
+    title.className   = 'lose';
+    msg.textContent   = `The Golem's power overwhelms you. The Vow remains unbroken.`;
+    btn.textContent   = 'Play Again (Reset level 1)';
+    btn.onclick = () => {
+      globalLevelIndex    = 0;
+      globalPlayerBoons   = [];
+      globalConsumedBoons = [];
+      updateActiveBoonsUI();
+      showIntroOverlay();
+      overlay.classList.add('hidden');
+    };
+  }
+}
+
+// ─── Card Play Logic ───────────────────────────────────
+
+/**
+ * Toggles a card's selection state. Enforces FIFO eviction
+ * when the 4th card is selected beyond the 3-card limit.
+ * @param {number} handIndex - Index of the card in state.deck.hand
+ */
+function toggleCardSelection(handIndex) {
+  if (state.phase !== 'player') return;
+  if (state.cardsPlayedThisTurn >= 3) return;
+
+  const idx = state.selectedCards.indexOf(handIndex);
+  if (idx !== -1) {
+    // Deselect
+    state.selectedCards.splice(idx, 1);
+  } else {
+    if (state.selectedCards.length >= 3) {
+      // FIFO: drop oldest selection to make room
+      state.selectedCards.shift();
+    }
+    state.selectedCards.push(handIndex);
+  }
+
+  renderHand(state);
+  updatePlaySelectedBtn();
+}
+
+/**
+ * Plays all currently staged (selected) cards in selection order.
+ * Evaluates win/loss after each card. Handles Vampiric Strike end-of-batch.
+ */
+function playSelectedCards() {
+  if (state.selectedCards.length === 0) return;
+
+  // Reverse-sort indices for safe splicing from hand
+  const toPlay  = [...state.selectedCards].sort((a, b) => b - a);
+  // Preserve original selection order for effect resolution
+  const ordered = state.selectedCards.map(i => state.deck.hand[i]);
+
+  // Move cards from hand to discard (reverse index to preserve offsets)
+  for (const i of toPlay) {
+    state.deck.discardPile.push(state.deck.hand[i]);
+    state.deck.hand.splice(i, 1);
+  }
+
+  state.selectedCards = [];
+
+  let strikeCount = 0;
+
+  for (const card of ordered) {
+    state.cardsPlayedThisTurn += 1;
+    if (card.id === 'strike') strikeCount++;
+
+    card.play(state);
+    updateAllUI(state);
+
+    if (checkWin(state)) {
+      setTimeout(() => endGame(state, true), 400);
+      return;
+    }
+    if (checkLose(state)) {
+      setTimeout(() => endGame(state, false), 400);
+      return;
+    }
+  }
+
+  // Vampiric Strike: heal if all 3 played were Strikes
+  if (globalPlayerBoons.includes('vampiricStrike') && ordered.length === 3 && strikeCount === 3) {
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 3);
+    log(`💖 <span class="log-buff">Vampiric Strike → Restored 3 HP!</span>`);
+    updatePlayerUI(state);
+  }
+
+  renderHand(state);
+  updateDeckUI(state);
+  updatePlayCounter(state);
+  updatePlaySelectedBtn();
+  updateEndTurnBtn();
+}
