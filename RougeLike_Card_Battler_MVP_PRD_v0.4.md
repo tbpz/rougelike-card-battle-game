@@ -1,0 +1,123 @@
+# GAME DESIGN DOCUMENT: PROJECT: LOGIC ECHO (MVP v0.4)
+
+> **Changelog from v0.3:** Massive difficulty scaling overhaul. Added "Exhaust on Discard" penalty for high-value cards. Added "Blood Debt" stacking self-damage mechanic to Blood Trade. Replaced Level 3+ Recharge turns with "Shield" armor intent. Scaled up enemy HP, Enrage thresholds, and Fatal Strike damage. Revised Thick Blood and Hemorrhage boons to interact with Blood Debt. Added UX fix preventing 4+ card play exploits.
+
+---
+
+## 1. SYSTEM OVERVIEW
+
+The core loop centers on a restricted action economy to increase tactical depth and forced decision-making.
+
+* **The "3/5 Vow" Mechanic:**
+    * **Draw Phase:** Player draws **5 cards** from the deck at the start of each turn.
+    * **Action Phase:** Player **selects** up to **3 cards**, then confirms by pressing **"Play Selected"**.
+    * **Discard Phase:** The remaining cards are automatically **discarded** at the end of the turn.
+* **Exhaust Penalty (NEW in v0.4):** High-value cards ([Blood Trade], [Insight]) are **Exhausted** (permanently removed for the rest of the level) if they are discarded unplayed at the end of the turn. This forces players to either use them immediately or lose them.
+* **Deck Cycle (The Reshuffle Loop):** When the Draw Pile is empty, the Discard Pile is shuffled to form a new Draw Pile. (Exhausted cards are *not* reshuffled).
+
+---
+
+## 2. CARD SELECTION UX
+
+The player uses a **two-step confirmation** system to play cards:
+
+1. **Click to Stage:** Clicking a card toggles it into a "staged" state, highlighted with a numbered badge indicating play order (1, 2, 3).
+2. **FIFO Overflow:** If a card is clicked while the maximum allowance (3 minus cards already played) is staged, the **oldest** staged card is automatically de-staged to make room.
+3. **"Play Selected" Button:** A confirmation button appears only when at least one card is staged. Pressing it plays all staged cards **in the order they were selected**, then hides itself.
+4. **"End Turn" Lock:** The "End Turn" button is **disabled** until exactly 3 cards have been played.
+
+---
+
+## 3. THE CARD CATALOG
+
+Base values are listed. Boon interactions are documented in Section 6.
+
+| Card Name | Type | Base Effect |
+| :--- | :--- | :--- |
+| **[Strike]** | Attack | Deal **6 damage**. |
+| **[Defend]** | Defense | Gain **6 Armor** (blocks incoming damage; expires at the start of the next turn). |
+| **[Blood Trade]** | Blood | Deal **12 damage**. Lose **3 to 7 HP** instantly (scales with level). Generates **1 Blood Debt**. **Exhausts** if discarded unplayed. |
+| **[Insight]** | Buff | Multiply the damage of all subsequent attack cards played **this turn** by ×1.5. **Exhausts** if discarded unplayed. |
+
+### Blood Debt Mechanic (NEW in v0.4)
+
+Playing [Blood Trade] generates **Blood Debt**. At the start of every player turn, the player takes true damage equal to their current Blood Debt total. Debt persists for the entire level. Spamming Blood Trade rapidly accelerates this turn-over-turn damage. 
+
+---
+
+## 4. ENEMY AI: THE ANCIENT GOLEM
+
+The Golem follows an **Intent Pattern** defined per level, switching to a **Terminal Intent** when low on health.
+
+### Standard Phase (HP > Enrage Threshold)
+* **Bash** – Deal damage. (Forces a choice between full mitigation or chip damage).
+* **Shatter** – Deal heavy damage. (Requires two [Defend] cards to fully block).
+* **Recharge** – 0 damage. (A safe window for the player to set up combos). *(Level 1 only)*
+* **Shield** – Gains Armor (between 8 and 12 depending on level) that absorbs incoming damage. *(Levels 3–5 only)*
+
+### Enrage Phase (HP ≤ Enrage Threshold)
+Once the Golem's HP drops to or below the enrage threshold **at the start of the player's turn**, it abandons the loop.
+* **Intent: Fatal Strike** – Deal massive fixed damage (up to 28) every turn until the battle ends.
+* **Design Goal:** Creates an escalating "Damage Race" forcing the player to burst down the boss.
+
+---
+
+## 5. THE 5-LEVEL DIFFICULTY LADDER (REVISED in v0.4)
+
+> Difficulty scales aggressively. The Golem gains more HP, enrages earlier (at higher HP values), hits harder during enrage, and uses Shield to blunt player burst combos. [Blood Trade] also costs more HP to play at higher levels.
+
+| Level | Name | Player HP | Enemy HP | Bash | Shatter | Intent Cycle | Enrage At | Fatal Strike | Blood Trade Cost |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | The Awakening | 35 | 35 | 5 | 8 | Bash→**Recharge**→Shatter | ≤10 | 10 | 3 HP |
+| **2** | Calibrated Pressure | 30 | 60 | 8 | 12 | Bash→Shatter→**Bash** | ≤22 | 15 | 4 HP |
+| **3** | The Relentless | 28 | 75 | 9 | 14 | Bash→Shatter→Bash→**Shield(8)** | ≤34 | 18 | 5 HP |
+| **4** | Iron Vow | 25 | 85 | 10 | 15 | Bash→Shatter→Bash→**Shield(10)** | ≤47 | 22 | 6 HP |
+| **5** | The Final Vow | 22 | 100 | 11 | 16 | Bash→Shatter→Bash→**Shield(12)** | ≤65 | 28 | 7 HP |
+
+---
+
+## 6. META-PROGRESSION: ARCHETYPES & BOONS
+
+After clearing each level (except the last), the player chooses **one Boon** from a random pair. Boons carry through all subsequent levels.
+
+### 6.1 Player Archetypes
+
+| Archetype | Glyph | Design Philosophy |
+| :--- | :---: | :--- |
+| **Berserker** | ⚔️ | Aggression builds momentum. Leans into high-damage burst and low-HP synergies. |
+| **Blood Priest** | 🩸 | Sacrifice fuels power. Leans into Blood Trade risk/reward cycles and Insight amplification. |
+| **Iron Sentinel** | 🛡️ | Defense is offense. Leans into armor stacking and reactive counterattack damage. |
+
+### 6.2 Boons Catalog (REVISED in v0.4)
+
+#### Berserker Boons
+| Boon | Glyph | Effect |
+| :--- | :---: | :--- |
+| **Momentum** | ⚡ | The **3rd card played** in a turn deals ×1.5 damage. Stacks with Insight. |
+| **Vampiric Strike** | 💖 | If you play **exactly 3 [Strike] cards** in a turn, heal **3 HP**. |
+| **Bloodlust** | 🔥 | [Strike] deals **+3 damage** if your HP is at or below **50%** of max HP. |
+| **War Tax** | ⚖️ | Every time **you lose HP** (from any source), deal **2 damage** to the Golem. |
+
+#### Blood Priest Boons
+| Boon | Glyph | Effect |
+| :--- | :---: | :--- |
+| **Thick Blood** | 🩸 | [Blood Trade] self-damage costs **2 fewer HP**. The **first** [Blood Trade] played each turn generates **no Blood Debt**. |
+| **Enduring Insight** | ✨ | [Insight]'s ×1.5 multiplier persists for **2 turns** instead of 1. |
+| **Hemorrhage** | 🥀 | [Blood Trade] deals **+4 damage**, but generates **2 Blood Debt** markers instead of 1. |
+| **Last Rites** | ⚰️ | **Once per run:** Survive a killing blow at **1 HP** instead of dying. Consumed on use. |
+
+#### Iron Sentinel Boons
+| Boon | Glyph | Effect |
+| :--- | :---: | :--- |
+| **Spiked Armor** | 🛡️ | Playing [Defend] deals **3 damage** to the Golem immediately. |
+| **Fortress** | 🏰 | [Defend] grants **8 Armor** instead of 6. |
+| **Thorns** | 🌵 | Whenever you **lose HP to an enemy attack**, deal **3 damage** to the Golem. |
+| **Grit** | 💪 | At the **start of each turn**, gain **3 Armor** before drawing. |
+
+---
+
+## 7. WIN / LOSS CONDITIONS
+
+* **Win (Level):** Reduce the Golem's HP to 0 before it kills the player.
+* **Win (Run):** Defeat all 5 levels in sequence.
+* **Lose:** Player HP reaches 0 after all survival effects (e.g., Last Rites) have resolved. (This includes dying to Blood Debt at the start of a turn).

@@ -15,7 +15,19 @@
  * @param {number} dmg - Raw damage amount (before any caps)
  */
 function dealDamageToEnemy(state, dmg) {
-  state.enemy.hp = Math.max(0, state.enemy.hp - dmg);
+  const blocked = Math.min(state.enemy.armor, dmg);
+  state.enemy.armor = Math.max(0, state.enemy.armor - dmg);
+  const realDmg = dmg - blocked;
+
+  if (blocked > 0) {
+    log(`<span class="log-system">🛡️ Golem's Shield absorbed ${blocked} damage.</span>`);
+  }
+  if (realDmg <= 0) {
+    updateEnemyUI(state);
+    return;
+  }
+
+  state.enemy.hp = Math.max(0, state.enemy.hp - realDmg);
   const panel = document.getElementById('enemy-panel');
   panel.classList.add('flash-damage');
   panel.addEventListener('animationend', () => panel.classList.remove('flash-damage'), { once: true });

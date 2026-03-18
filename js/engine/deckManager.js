@@ -6,6 +6,8 @@
    No DOM access. No side effects outside state mutation.
 ══════════════════════════════════════════ */
 
+const EXHAUST_ON_DISCARD = new Set(['bloodTrade', 'insight']);
+
 /**
  * Builds an unshuffled deck array from a level's deck config.
  * @param {object} levelConfig
@@ -56,11 +58,18 @@ function drawCards(state, n) {
 }
 
 /**
- * Moves all cards in hand to the discard pile. Clears selection.
+ * Moves all cards in hand to the discard pile (or exhaust pile for marked cards). Clears selection.
  * @param {object} state
  */
 function discardHand(state) {
-  state.deck.discardPile.push(...state.deck.hand);
+  for (const card of state.deck.hand) {
+    if (EXHAUST_ON_DISCARD.has(card.id)) {
+      state.deck.exhaustPile.push(card);
+      log(`<span class="log-system">💨 [${card.name}] is Exhausted — lost for this level.</span>`);
+    } else {
+      state.deck.discardPile.push(card);
+    }
+  }
   state.deck.hand = [];
   state.selectedCards = [];
 }

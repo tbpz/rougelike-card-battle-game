@@ -68,12 +68,18 @@ const CARD_CATALOG = {
     type: 'blood',
     glyph: '💀',
     getEffectText: () => {
-      const dmg = globalPlayerBoons.includes('hemorrhage') ? 16 : 12;
-      const hpLoss = globalPlayerBoons.includes('thickBlood') ? 1 : 3;
-      return `Deal ${dmg} dmg. Lose ${hpLoss} HP.`;
+      const levelConfig = typeof LEVELS !== 'undefined' ? LEVELS[globalLevelIndex] : null;
+      const baseCost    = levelConfig ? (levelConfig.bloodTradeCost || 3) : 3;
+      const dmg         = globalPlayerBoons.includes('hemorrhage') ? 16 : 12;
+      const hpLoss      = globalPlayerBoons.includes('thickBlood')
+                            ? Math.max(1, baseCost - 2)
+                            : baseCost;
+      const debtInfo    = globalPlayerBoons.includes('hemorrhage') ? ' (+2 Debt)' : ' (+1 Debt)';
+      return `Deal ${dmg} dmg. Lose ${hpLoss} HP.${debtInfo}`;
     },
     quantity: 2,
     play(state) {
+      // ── Damage ──────────────────────────────────────
       let extraMult = 1;
       if (globalPlayerBoons.includes('momentum') && state.cardsPlayedThisTurn === 3) {
         extraMult = 1.5;
@@ -83,10 +89,35 @@ const CARD_CATALOG = {
       const dmg = Math.floor((12 + extraBase) * state.player.insightMultiplier * extraMult);
       dealDamageToEnemy(state, dmg);
 
-      const recoil = globalPlayerBoons.includes('thickBlood') ? 1 : 3;
-      // Route self-damage through the effect bus so War Tax fires correctly
+      // ── Instant HP cost (level-scaled, Thick Blood reduces by 2) ──
+      const levelConfig = typeof LEVELS !== 'undefined' ? LEVELS[globalLevelIndex] : null;
+      const baseCost    = levelConfig ? (levelConfig.bloodTradeCost || 3) : 3;
+      const recoil      = globalPlayerBoons.includes('thickBlood')
+                            ? Math.max(1, baseCost - 2)
+                            : baseCost;
       applyPlayerSelfDamage(state, recoil);
-      log(`💀 <span class="log-blood">Blood Trade → ${dmg} damage to Golem, -${recoil} HP to you (true damage).</span>`);
+      log(`💀 <span class="log-blood">Blood Trade → ${dmg} dmg to Golem, -${recoil} HP (true damage).</span>`);
+
+      // ── Blood Debt accumulation ──────────────────────
+      const isFirstThisTurn = !state.player.bloodTradePlayedThisTurn;
+      const hasThickBlood   = globalPlayerBoons.includes('thickBlood');
+      const hasHemorrhage   = globalPlayerBoons.includes('hemorrhage');
+
+      let debtGain = hasHemorrhage ? 2 : 1;
+
+      // Thick Blood: first Blood Trade each turn generates no Debt
+      if (hasThickBlood && isFirstThisTurn) {
+        debtGain = 0;
+        log(`<span class="log-buff">🩸 Thick Blood — no Debt for first Blood Trade this turn.</span>`);
+      }
+
+      if (debtGain > 0) {
+        state.player.bloodDebt += debtGain;
+        log(`<span class="log-blood">🩸 Blood Debt: +${debtGain} → Total: ${state.player.bloodDebt}</span>`);
+      }
+
+      state.player.bloodTradePlayedThisTurn = true;
+
       applyLastRitesIfNeeded(state);
       updatePlayerUI(state);
     },

@@ -20,9 +20,9 @@ const BOONS_CATALOG = {
   warTax:         { archetype: 'berserker',    name: 'War Tax',          glyph: '⚖️', desc: 'Every time you lose HP, deal 2 damage to the Golem.' },
 
   // ── Blood Priest ──────────────────────────────────────
-  thickBlood:     { archetype: 'bloodPriest',  name: 'Thick Blood',      glyph: '🩸', desc: '[Blood Trade] costs 1 HP instead of 3.' },
+  thickBlood:     { archetype: 'bloodPriest',  name: 'Thick Blood',      glyph: '🩸', desc: '[Blood Trade] costs 2 fewer HP. The first [Blood Trade] each turn generates no Blood Debt.' },
   enduringInsight:{ archetype: 'bloodPriest',  name: 'Enduring Insight', glyph: '✨', desc: '[Insight] lasts for two turns instead of one.' },
-  hemorrhage:     { archetype: 'bloodPriest',  name: 'Hemorrhage',       glyph: '🥀', desc: '[Blood Trade] deals +4 damage.' },
+  hemorrhage:     { archetype: 'bloodPriest',  name: 'Hemorrhage',       glyph: '🥀', desc: '[Blood Trade] deals +4 damage, but generates 2 Blood Debt markers instead of 1.' },
   lastRites:      { archetype: 'bloodPriest',  name: 'Last Rites',       glyph: '⚰️', desc: 'Once per run, survive a killing blow at 1 HP.' },
 
   // ── Iron Sentinel ─────────────────────────────────────

@@ -81,6 +81,20 @@ function startTurn(state) {
     log(`💪 <span class="log-defend">Grit → +3 Armor at start of turn.</span>`);
   }
 
+  // Reset Blood Trade tracker each turn
+  state.player.bloodTradePlayedThisTurn = false;
+
+  // Blood Debt tick — apply cumulative damage before the turn begins
+  if (state.player.bloodDebt > 0) {
+    applyPlayerSelfDamage(state, state.player.bloodDebt);
+    log(`<span class="log-blood">🩸 Blood Debt strikes! -${state.player.bloodDebt} HP (${state.player.bloodDebt} markers)</span>`);
+    applyLastRitesIfNeeded(state);
+    if (checkLose(state)) {
+      endGame(state, false);
+      return;
+    }
+  }
+
   // Tick down Insight duration
   if (state.player.insightActiveDuration > 0) {
     state.player.insightActiveDuration--;
@@ -213,7 +227,8 @@ function toggleCardSelection(handIndex) {
     // Deselect
     state.selectedCards.splice(idx, 1);
   } else {
-    if (state.selectedCards.length >= 3) {
+    const maxAllowed = 3 - state.cardsPlayedThisTurn;
+    if (state.selectedCards.length >= maxAllowed) {
       // FIFO: drop oldest selection to make room
       state.selectedCards.shift();
     }

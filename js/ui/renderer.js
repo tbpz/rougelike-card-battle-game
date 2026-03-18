@@ -69,6 +69,14 @@ function updatePlayerUI(state) {
   } else {
     insightBadge.classList.add('hidden');
   }
+
+  const debtBadge = document.getElementById('blood-debt-badge');
+  if (p.bloodDebt > 0) {
+    document.getElementById('blood-debt-count').textContent = p.bloodDebt;
+    debtBadge.classList.remove('hidden');
+  } else {
+    debtBadge.classList.add('hidden');
+  }
 }
 
 // ─── Enemy Panel ───────────────────────────────────────
@@ -91,12 +99,21 @@ function updateEnemyUI(state) {
     dmgEl.textContent = '(no dmg)';
     dmgEl.className   = 'intent-dmg safe';
   }
+
+  const enemyArmorBadge = document.getElementById('enemy-armor-badge');
+  if (e.armor > 0) {
+    document.getElementById('enemy-armor').textContent = e.armor;
+    enemyArmorBadge.classList.remove('hidden');
+  } else {
+    enemyArmorBadge.classList.add('hidden');
+  }
 }
 
 // ─── Deck / Counter Panels ─────────────────────────────
 function updateDeckUI(state) {
   document.getElementById('draw-count').textContent    = state.deck.drawPile.length;
   document.getElementById('discard-count').textContent = state.deck.discardPile.length;
+  document.getElementById('exhaust-count').textContent = state.deck.exhaustPile.length;
 }
 
 function updatePlayCounter(state) {

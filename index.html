@@ -44,6 +44,9 @@
           <div class="status-badge insight-badge hidden" id="insight-badge">
             ✨ INSIGHT
           </div>
+          <div class="status-badge blood-debt-badge hidden" id="blood-debt-badge">
+            🩸 Debt: <span id="blood-debt-count">0</span>
+          </div>
         </div>
         <div id="active-boons-list" class="active-boons-list"></div>
       </section>
@@ -62,6 +65,11 @@
             <div class="hp-bar enemy" id="enemy-hp-bar"></div>
           </div>
           <div class="hp-text"><span id="enemy-hp">--</span> / <span id="enemy-max-hp">--</span> HP</div>
+        </div>
+        <div class="status-row">
+          <div class="status-badge hidden" id="enemy-armor-badge">
+            🛡️ <span id="enemy-armor">0</span>
+          </div>
         </div>
         <div class="intent-box" id="intent-box">
           <div class="intent-label">INTENT</div>
@@ -88,6 +96,7 @@
         <div class="deck-info">
           <span>📚 Draw: <span id="draw-count">0</span></span>
           <span>🗑️ Discard: <span id="discard-count">0</span></span>
+          <span>💨 Exhaust: <span id="exhaust-count">0</span></span>
         </div>
         <div class="controls-right">
           <button id="play-selected-btn" class="btn-confirm hidden">Play 0 Cards ✓</button>

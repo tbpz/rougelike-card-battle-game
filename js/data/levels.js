@@ -17,8 +17,8 @@ const LEVELS = [
       '💤 Enrages at 10 HP'
     ],
     playerHp: 35, enemyHp: 35,
-    cycle: ['bash', 'shatter', 'recharge'],
-    bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 10,
+    cycle: ['bash', 'recharge', 'shatter'],
+    bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 10, bloodTradeCost: 3,
     deck: { strike: 4, defend: 5, bloodTrade: 2, insight: 2 }
   },
   {
@@ -30,9 +30,9 @@ const LEVELS = [
       '⏱️ Safe "Recharge" turn every 3rd turn',
       '⚡ Enrages at 15 HP'
     ],
-    playerHp: 30, enemyHp: 50,
-    cycle: ['bash', 'shatter', 'recharge'],
-    bashDmg: 8, shatterDmg: 12, enrageAt: 15, fatalDmg: 15,
+    playerHp: 30, enemyHp: 60,
+    cycle: ['bash', 'shatter', 'bash'],
+    bashDmg: 8, shatterDmg: 12, enrageAt: 22, fatalDmg: 15, bloodTradeCost: 4,
     deck: { strike: 4, defend: 4, bloodTrade: 2, insight: 2 }
   },
   {
@@ -43,9 +43,9 @@ const LEVELS = [
       '🩸 1 fewer Blood Trade in deck',
       '⚠️ Enrages earlier (at 20 HP)'
     ],
-    playerHp: 28, enemyHp: 55,
-    cycle: ['bash', 'shatter', 'bash'],
-    bashDmg: 9, shatterDmg: 14, enrageAt: 20, fatalDmg: 16,
+    playerHp: 28, enemyHp: 75,
+    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    bashDmg: 9, shatterDmg: 14, enrageAt: 34, fatalDmg: 18, shieldArmor: 8, bloodTradeCost: 5,
     deck: { strike: 4, defend: 4, bloodTrade: 1, insight: 2 }
   },
   {
@@ -56,9 +56,9 @@ const LEVELS = [
       '🗡️ Start at only 25 Max HP',
       '🔥 Enrages very early (at 25 HP)'
     ],
-    playerHp: 25, enemyHp: 60,
-    cycle: ['bash', 'shatter', 'bash'],
-    bashDmg: 10, shatterDmg: 15, enrageAt: 25, fatalDmg: 18,
+    playerHp: 25, enemyHp: 85,
+    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    bashDmg: 10, shatterDmg: 15, enrageAt: 47, fatalDmg: 22, shieldArmor: 10, bloodTradeCost: 6,
     deck: { strike: 3, defend: 3, bloodTrade: 3, insight: 2 }
   },
   {
@@ -70,9 +70,9 @@ const LEVELS = [
       '☠️ Enrages at 30 HP (over half health!)',
       '🏴‍☠️ Fatal Strike deals 20 damage'
     ],
-    playerHp: 22, enemyHp: 65,
-    cycle: ['bash', 'shatter', 'bash'],
-    bashDmg: 11, shatterDmg: 16, enrageAt: 30, fatalDmg: 20,
+    playerHp: 22, enemyHp: 100,
+    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    bashDmg: 11, shatterDmg: 16, enrageAt: 65, fatalDmg: 28, shieldArmor: 12, bloodTradeCost: 7,
     deck: { strike: 3, defend: 2, bloodTrade: 3, insight: 4 }
   }
 ];
