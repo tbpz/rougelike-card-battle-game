@@ -22,7 +22,10 @@
 
     <header id="game-header">
       <h1 class="game-title">⟨ LOGIC ECHO ⟩</h1>
-      <p class="subtitle">The 3/5 Vow — Level <span id="level-num">1</span>/5</p>
+      <p class="subtitle">
+        The 3/5 Vow — Level <span id="level-num">1</span>/5
+        <button id="btn-show-rules" title="View Rules" style="background:none; border:none; cursor:pointer; font-size:1.1em; color:var(--text-muted); margin-left:6px; transition:color 0.2s;">ℹ️</button>
+      </p>
     </header>
 
     <!-- Battle Arena -->
@@ -94,9 +97,9 @@
       <div id="hand-container"></div>
       <div id="controls">
         <div class="deck-info">
-          <span>📚 Draw: <span id="draw-count">0</span></span>
-          <span>🗑️ Discard: <span id="discard-count">0</span></span>
-          <span>💨 Exhaust: <span id="exhaust-count">0</span></span>
+          <span><span class="deck-term" id="term-draw">📚 Draw</span>: <span id="draw-count">0</span></span>
+          <span><span class="deck-term" id="term-discard">🗑️ Discard</span>: <span id="discard-count">0</span></span>
+          <span><span class="deck-term" id="term-exhaust">💨 Exhaust</span>: <span id="exhaust-count">0</span></span>
         </div>
         <div class="controls-right">
           <button id="play-selected-btn" class="btn-confirm hidden">Play 0 Cards ✓</button>
@@ -132,6 +135,18 @@
   <div id="intro-overlay">
     <div id="intro-modal">
       <!-- Content populated by JS showIntroOverlay() -->
+    </div>
+  </div>
+
+  <!-- ══ GLOSSARY OVERLAY ══ -->
+  <div id="glossary-overlay" class="hidden">
+    <div id="glossary-modal">
+      <div id="glossary-header">
+        <h2 id="glossary-title">Term</h2>
+        <button id="close-glossary-btn" class="btn-close">×</button>
+      </div>
+      <p id="glossary-desc" class="intro-flavour"></p>
+      <div id="glossary-card-list"></div>
     </div>
   </div>
 

@@ -26,13 +26,13 @@ const LEVELS = [
     flavor: 'The original Vow. Block carefully or be broken.',
     rules: [
       '⚖️ Standard 3/5 Vow deck ratios',
-      '💥 Shatter requires 2 Defends to block fully',
+      '⚠️ Enemy prepares a massive attack. Defend or be broken.',
       '⏱️ Safe "Recharge" turn every 3rd turn',
       '⚡ Enrages at 15 HP'
     ],
     playerHp: 30, enemyHp: 60,
-    cycle: ['bash', 'shatter', 'bash'],
-    bashDmg: 8, shatterDmg: 12, enrageAt: 22, fatalDmg: 15, bloodTradeCost: 4,
+    cycle: ['shatter', 'bash', 'prepare'],
+    bashDmg: 10, shatterDmg: 20, enrageAt: 22, fatalDmg: 15, bloodTradeCost: 4,
     deck: { strike: 4, defend: 4, bloodTrade: 2, insight: 2 }
   },
   {

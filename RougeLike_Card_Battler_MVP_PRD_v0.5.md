@@ -1,6 +1,6 @@
-# GAME DESIGN DOCUMENT: PROJECT: LOGIC ECHO (MVP v0.4)
+# GAME DESIGN DOCUMENT: PROJECT: LOGIC ECHO (MVP v0.5)
 
-> **Changelog from v0.3:** Massive difficulty scaling overhaul. Added "Exhaust on Discard" penalty for high-value cards. Added "Blood Debt" stacking self-damage mechanic to Blood Trade. Replaced Level 3+ Recharge turns with "Shield" armor intent. Scaled up enemy HP, Enrage thresholds, and Fatal Strike damage. Revised Thick Blood and Hemorrhage boons to interact with Blood Debt. Added UX fix preventing 4+ card play exploits.
+> **Changelog from v0.4:** Added clickable Deck Glossary popups for Draw, Discard, and Exhaust piles. Implemented ability to reopen Level Rules mid-battle. Improved Log UI contrast.
 
 ---
 
@@ -17,14 +17,23 @@ The core loop centers on a restricted action economy to increase tactical depth 
 
 ---
 
-## 2. CARD SELECTION UX
+## 2. UI & UX MECHANICS
 
+### 2.1 Card Selection Flow
 The player uses a **two-step confirmation** system to play cards:
 
 1. **Click to Stage:** Clicking a card toggles it into a "staged" state, highlighted with a numbered badge indicating play order (1, 2, 3).
 2. **FIFO Overflow:** If a card is clicked while the maximum allowance (3 minus cards already played) is staged, the **oldest** staged card is automatically de-staged to make room.
 3. **"Play Selected" Button:** A confirmation button appears only when at least one card is staged. Pressing it plays all staged cards **in the order they were selected**, then hides itself.
 4. **"End Turn" Lock:** The "End Turn" button is **disabled** until exactly 3 cards have been played.
+
+### 2.2 Deck Information Glossary (NEW in v0.5)
+* At the bottom of the screen, the counters for **Draw**, **Discard**, and **Exhaust** piles are fully interactive. 
+* Clicking any of these terms opens a **Glossary Modal** that defines the pile mechanics and provides a visual list of all cards currently residing in that corresponding pile.
+
+### 2.3 On-Demand Rules Reference (NEW in v0.5)
+* Players can click the **Info (ℹ️) Button** located next to the Level Indicator at the top of the screen to re-open the Level Rules overlay mid-battle.
+* This allows players to review complex intents or level-specific mechanics without losing their current battle progress.
 
 ---
 

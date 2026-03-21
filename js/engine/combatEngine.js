@@ -176,6 +176,7 @@ function endGame(state, playerWon) {
       msg.textContent   = `The Golem's form shatters, but it begins to reassemble into something stronger... You survived ${state.turn} turns.`;
       btn.textContent   = 'Next Level ›';
       btn.onclick = () => {
+        globalPlayerHp = Math.min(globalPlayerMaxHp, state.player.hp + Math.floor(globalPlayerMaxHp * 0.2));
         globalLevelIndex++;
         showBoonSelection();
         overlay.classList.add('hidden');
@@ -189,6 +190,8 @@ function endGame(state, playerWon) {
         globalLevelIndex    = 0;
         globalPlayerBoons   = [];
         globalConsumedBoons = [];
+        globalPlayerHp      = 0;
+        globalPlayerMaxHp   = 0;
         updateActiveBoonsUI();
         showIntroOverlay();
         overlay.classList.add('hidden');
@@ -204,6 +207,8 @@ function endGame(state, playerWon) {
       globalLevelIndex    = 0;
       globalPlayerBoons   = [];
       globalConsumedBoons = [];
+      globalPlayerHp      = 0;
+      globalPlayerMaxHp   = 0;
       updateActiveBoonsUI();
       showIntroOverlay();
       overlay.classList.add('hidden');

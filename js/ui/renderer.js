@@ -172,6 +172,66 @@ function triggerShake() {
   arena.addEventListener('animationend', () => arena.classList.remove('shake'), { once: true });
 }
 
+// ─── Glossary / Terms ──────────────────────────────────
+function showDeckGlossary(pileType) {
+  const overlay = document.getElementById('glossary-overlay');
+  const titleEl = document.getElementById('glossary-title');
+  const descEl = document.getElementById('glossary-desc');
+  const listEl = document.getElementById('glossary-card-list');
+  
+  let title = '';
+  let desc = '';
+  let cards = [];
+
+  if (pileType === 'drawPile') {
+    title = 'Draw Pile';
+    desc = 'Cards you will draw in upcoming turns. When this is empty and you need to draw, the Discard Pile is shuffled and becomes the new Draw Pile.';
+    cards = state.deck.drawPile;
+  } else if (pileType === 'discardPile') {
+    title = 'Discard Pile';
+    desc = 'Cards you have played or discarded this combat. They will be shuffled back into your Draw Pile when you run out of cards to draw.';
+    cards = state.deck.discardPile;
+  } else if (pileType === 'exhaustPile') {
+    title = 'Exhaust Pile';
+    desc = 'Cards removed from play for the remainder of this combat. They will return to your deck after the battle.';
+    cards = state.deck.exhaustPile;
+  }
+
+  titleEl.textContent = title;
+  descEl.textContent = desc;
+  listEl.innerHTML = '';
+
+  if (cards.length === 0) {
+    listEl.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">(Empty)</span>';
+  } else {
+    cards.forEach((card, idx) => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.dataset.type = card.type;
+      // Glossary cards shouldn't be playable or have hover animations ideally, but reusing .card is easiest.
+      // We can add inline styles to disable pointer events.
+      el.style.pointerEvents = 'none';
+      el.style.transform = 'scale(0.9)';
+      el.style.margin = '-5px'; // Adjust for scale
+
+      el.innerHTML = `
+        <div class="card-glyph">${card.glyph}</div>
+        <div class="card-name">${card.name}</div>
+        <div class="card-effect">${card.getEffectText()}</div>
+        <div class="card-type-bar"></div>
+      `;
+      listEl.appendChild(el);
+    });
+  }
+
+  overlay.classList.remove('hidden');
+}
+
+function hideDeckGlossary() {
+  const overlay = document.getElementById('glossary-overlay');
+  overlay.classList.add('hidden');
+}
+
 // ─── Composite Update ──────────────────────────────────
 function updateAllUI(state) {
   updatePlayerUI(state);

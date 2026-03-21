@@ -11,6 +11,8 @@
 let globalLevelIndex  = 0;  // Current level index (0–4)
 let globalPlayerBoons = [];  // Acquired boon IDs for this run
 let globalConsumedBoons = []; // Single-use boons spent this run
+let globalPlayerHp = 0;       // Persistent current HP
+let globalPlayerMaxHp = 0;    // Persistent max HP
 
 // ── Battle-scoped state (reset each level) ──────────────
 let state = {};
@@ -21,12 +23,22 @@ let state = {};
  * @returns {object} Initial game state object
  */
 function createInitialState(levelConfig) {
+  // Setup persistent HP if starting a new run
+  if (globalLevelIndex === 0 || globalPlayerMaxHp === 0) {
+    globalPlayerMaxHp = levelConfig.playerHp;
+    globalPlayerHp    = levelConfig.playerHp;
+  } else {
+    // Level override restricts maximum HP (e.g. "Start at 25 Max HP")
+    globalPlayerMaxHp = levelConfig.playerHp;
+    globalPlayerHp    = Math.min(globalPlayerHp, globalPlayerMaxHp);
+  }
+
   return {
     turn:  1,
     phase: 'player',  // 'player' | 'enemy' | 'over'
     player: {
-      maxHp:                levelConfig.playerHp,
-      hp:                   levelConfig.playerHp,
+      maxHp:                globalPlayerMaxHp,
+      hp:                   globalPlayerHp,
       armor:                0,
       insightActive:        false,
       insightActiveDuration: 0,

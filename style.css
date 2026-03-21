@@ -990,3 +990,86 @@ body {
   color: var(--text-dim);
   line-height: 1.4;
 }
+
+/* ══ DECK GLOSSARY ══ */
+.deck-term {
+  cursor: pointer;
+  border-bottom: 1px dotted var(--text-muted);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.deck-term:hover {
+  color: var(--gold);
+  border-bottom: 1px solid var(--gold);
+}
+
+#glossary-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+#glossary-modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-panel);
+  padding: 30px 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+#glossary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#glossary-title {
+  font-family: var(--font-head);
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.btn-close:hover {
+  color: var(--red);
+  transform: scale(1.1);
+}
+
+#glossary-desc {
+  margin-bottom: 20px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+#glossary-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 10px 0;
+  justify-content: center;
+  /* Ensure inner elements don't overlap scrollbars */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dim) transparent;
+}

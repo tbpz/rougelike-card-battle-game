@@ -42,9 +42,19 @@ function dealDamageToEnemy(state, dmg) {
  */
 function applyPlayerSelfDamage(state, amount) {
   if (amount <= 0) return;
-  state.player.hp = Math.max(0, state.player.hp - amount);
+  
+  const blocked = Math.min(state.player.armor, amount);
+  const realDamage = amount - blocked;
+  
+  state.player.armor = Math.max(0, state.player.armor - blocked);
+  state.player.hp = Math.max(0, state.player.hp - realDamage);
+  
+  if (blocked > 0) {
+    log(`<span class="log-system">🛡️ Shield absorbed ${blocked} self-damage.</span>`);
+  }
+  
   // War Tax: self-damage also triggers it
-  if (globalPlayerBoons.includes('warTax')) {
+  if (realDamage > 0 && globalPlayerBoons.includes('warTax')) {
     dealDamageToEnemy(state, 2);
     log(`⚖️ <span class="log-damage">War Tax → 2 damage returned to Golem!</span>`);
   }

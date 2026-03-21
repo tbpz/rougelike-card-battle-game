@@ -16,6 +16,7 @@ function getLevelIntents(levelConfig) {
     bash:        { name: 'Bash',         damage: levelConfig.bashDmg,    icon: '⚡', type: 'normal' },
     shatter:     { name: 'Shatter',      damage: levelConfig.shatterDmg, icon: '💥', type: 'normal' },
     recharge:    { name: 'Recharge',     damage: 0,                      icon: '⚙️', type: 'safe'   },
+    prepare:     { name: 'Prepare',      damage: 0,                      icon: '⚠️', type: 'buffer' },
     shield:      { name: 'Shield',       damage: 0,                      icon: '🛡️', type: 'shield' },
     fatalStrike: { name: 'Fatal Strike', damage: levelConfig.fatalDmg,   icon: '☠️', type: 'enrage' },
   };
