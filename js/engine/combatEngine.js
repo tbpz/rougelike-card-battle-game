@@ -63,14 +63,37 @@ function enemyAct(state) {
 // ─── Turn Flow ─────────────────────────────────────────
 
 /**
+ * Triggers Blood Surge: +1 Action, +1 Blood Debt
+ */
+function triggerBloodSurge() {
+  if (state.phase !== 'player') return;
+  if (state.player.bloodSurgeUsedThisTurn) return;
+
+  state.player.bloodSurgeUsedThisTurn = true;
+  state.maxPlaysThisTurn += 1;
+  state.player.bloodDebt += 1;
+  log(`<span class="log-blood">💉 Blood Surge! +1 Action, +1 Blood Debt. Total Debt: ${state.player.bloodDebt}</span>`);
+  
+  // Try to cleanly re-evaluate UI buttons (these assume renderer.js functions are available)
+  if (typeof updatePlayerUI === 'function') updatePlayerUI(state);
+  if (typeof updatePlayCounter === 'function') updatePlayCounter(state);
+  if (typeof updatePlaySelectedBtn === 'function') updatePlaySelectedBtn();
+  if (typeof updateEndTurnBtn === 'function') updateEndTurnBtn();
+  if (typeof renderHand === 'function') renderHand(state);
+  if (typeof updateBloodSurgeBtn === 'function') updateBloodSurgeBtn(state);
+}
+
+/**
  * Starts a new player turn: reset turn state, apply start-of-turn boons,
  * draw cards, log intent header, update UI.
  * @param {object} state
  */
 function startTurn(state) {
   state.phase              = 'player';
+  state.maxPlaysThisTurn   = 3; // Reset max plays at the start of each turn
   state.cardsPlayedThisTurn = 0;
   state.selectedCards      = [];
+  state.player.bloodSurgeUsedThisTurn = false;
 
   // Reset armor each turn
   state.player.armor = 0;
@@ -178,7 +201,12 @@ function endGame(state, playerWon) {
       btn.onclick = () => {
         globalPlayerHp = Math.min(globalPlayerMaxHp, state.player.hp + Math.floor(globalPlayerMaxHp * 0.2));
         globalLevelIndex++;
-        showBoonSelection();
+        // Go to Spoils of War draft phase instead of directly to Boons
+        if (typeof showDraftSelection === 'function') {
+          showDraftSelection();
+        } else {
+          showBoonSelection();
+        }
         overlay.classList.add('hidden');
       };
     } else {
@@ -225,14 +253,14 @@ function endGame(state, playerWon) {
  */
 function toggleCardSelection(handIndex) {
   if (state.phase !== 'player') return;
-  if (state.cardsPlayedThisTurn >= 3) return;
+  if (state.cardsPlayedThisTurn >= state.maxPlaysThisTurn) return;
 
   const idx = state.selectedCards.indexOf(handIndex);
   if (idx !== -1) {
     // Deselect
     state.selectedCards.splice(idx, 1);
   } else {
-    const maxAllowed = 3 - state.cardsPlayedThisTurn;
+    const maxAllowed = state.maxPlaysThisTurn - state.cardsPlayedThisTurn;
     if (state.selectedCards.length >= maxAllowed) {
       // FIFO: drop oldest selection to make room
       state.selectedCards.shift();
@@ -256,9 +284,16 @@ function playSelectedCards() {
   // Preserve original selection order for effect resolution
   const ordered = state.selectedCards.map(i => state.deck.hand[i]);
 
-  // Move cards from hand to discard (reverse index to preserve offsets)
+  // Move cards from hand to discard or exhaust
+  const EXHAUST_ON_PLAY = new Set(['scavenge', 'absolution']);
   for (const i of toPlay) {
-    state.deck.discardPile.push(state.deck.hand[i]);
+    const card = state.deck.hand[i];
+    if (EXHAUST_ON_PLAY.has(card.id)) {
+      state.deck.exhaustPile.push(card);
+      log(`<span class="log-system">💨 [${card.name}] is Exhausted on play.</span>`);
+    } else {
+      state.deck.discardPile.push(card);
+    }
     state.deck.hand.splice(i, 1);
   }
 

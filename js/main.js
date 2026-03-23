@@ -70,6 +70,52 @@ function showIntroOverlay(isReopen = false) {
 }
 
 /**
+ * Shows the Spoils of War Deck Growth selection overlay.
+ * Presents 3 distinct cards to draft permanently.
+ */
+function showDraftSelection() {
+  const overlay   = document.getElementById('draft-overlay');
+  const container = document.getElementById('draft-options-container');
+
+  const options = getDraftChoices(3);
+
+  if (options.length === 0) {
+    showBoonSelection();
+    return;
+  }
+
+  container.innerHTML = '';
+  options.forEach(cardId => {
+    const card = CARD_CATALOG[cardId];
+    const el   = document.createElement('div');
+    el.className = 'card';
+    // Style adjustments for the modal display
+    el.style.transform = 'scale(1.1)';
+    el.style.margin = '10px 15px';
+    el.dataset.type = card.type;
+    
+    el.innerHTML = `
+      <div class="card-glyph">${card.glyph}</div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-effect">${card.getEffectText()}</div>
+      <div class="card-type-bar"></div>
+    `;
+    
+    el.onclick = () => {
+      addCardToRunDeck(cardId);
+      log(`<span class="log-buff">Drafted [${card.name}] permanently into the deck.</span>`);
+      overlay.classList.add('hidden');
+      updateDeckUI(state);
+      showBoonSelection(); // Proceed to boon phase
+    };
+    
+    container.appendChild(el);
+  });
+
+  overlay.classList.remove('hidden');
+}
+
+/**
  * Shows the between-level boon selection overlay.
  * Picks 2 random un-owned boons for the player to choose from.
  */
@@ -77,7 +123,12 @@ function showBoonSelection() {
   const overlay   = document.getElementById('boon-overlay');
   const container = document.getElementById('boon-options-container');
 
-  const available = Object.keys(BOONS_CATALOG).filter(k => !globalPlayerBoons.includes(k));
+  const available = Object.keys(BOONS_CATALOG).filter(k => {
+    if (globalPlayerBoons.includes(k)) return false;
+    // Lock Blood Surge until Level 3 (index 2)
+    if (k === 'bloodSurge' && globalLevelIndex < 2) return false;
+    return true;
+  });
   const options   = shuffle(available).slice(0, 2);
 
   if (options.length === 0) {
@@ -112,6 +163,13 @@ function showBoonSelection() {
 
 document.getElementById('btn-show-rules').addEventListener('click', () => {
   showIntroOverlay(true);
+});
+
+document.getElementById('blood-surge-btn').addEventListener('click', () => {
+  if (state.phase !== 'player') return;
+  if (typeof triggerBloodSurge === 'function') {
+    triggerBloodSurge();
+  }
 });
 
 document.getElementById('play-selected-btn').addEventListener('click', () => {

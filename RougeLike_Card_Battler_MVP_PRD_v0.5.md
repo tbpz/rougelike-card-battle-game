@@ -1,6 +1,6 @@
-# GAME DESIGN DOCUMENT: PROJECT: LOGIC ECHO (MVP v0.5)
+# GAME DESIGN DOCUMENT: PROJECT: LOGIC ECHO (MVP v0.6)
 
-> **Changelog from v0.4:** Added clickable Deck Glossary popups for Draw, Discard, and Exhaust piles. Implemented ability to reopen Level Rules mid-battle. Improved Log UI contrast.
+> **Changelog from v0.5:** Added 'Spoils of War' Deck Growth (drafting phase after victories). Added 8 new horizontal-progression cards. Introduced 'Blood Surge' systemic action-economy extension as a new Blood Priest Boon.
 
 ---
 
@@ -8,9 +8,9 @@
 
 The core loop centers on a restricted action economy to increase tactical depth and forced decision-making.
 
-* **The "3/5 Vow" Mechanic:**
+* **The Vow Mechanic (Dynamic Action Economy):**
     * **Draw Phase:** Player draws **5 cards** from the deck at the start of each turn.
-    * **Action Phase:** Player **selects** up to **3 cards**, then confirms by pressing **"Play Selected"**.
+    * **Action Phase:** Player **selects** up to their **Action Capacity** (Base 3), then confirms by pressing **"Play Selected"**. Action Capacity can be dynamically increased mid-turn via specific Boons (e.g., Blood Surge).
     * **Discard Phase:** The remaining cards are automatically **discarded** at the end of the turn.
 * **Exhaust Penalty (NEW in v0.4):** High-value cards ([Blood Trade], [Insight]) are **Exhausted** (permanently removed for the rest of the level) if they are discarded unplayed at the end of the turn. This forces players to either use them immediately or lose them.
 * **Deck Cycle (The Reshuffle Loop):** When the Draw Pile is empty, the Discard Pile is shuffled to form a new Draw Pile. (Exhausted cards are *not* reshuffled).
@@ -47,6 +47,20 @@ Base values are listed. Boon interactions are documented in Section 6.
 | **[Defend]** | Defense | Gain **6 Armor** (blocks incoming damage; expires at the start of the next turn). |
 | **[Blood Trade]** | Blood | Deal **12 damage**. Lose **3 to 7 HP** instantly (scales with level). Generates **1 Blood Debt**. **Exhausts** if discarded unplayed. |
 | **[Insight]** | Buff | Multiply the damage of all subsequent attack cards played **this turn** by ×1.5. **Exhausts** if discarded unplayed. |
+
+### 3.1 Draftable Cards (Spoils of War Pool)
+These cards do not appear in the starting deck. They are exclusively drafted during the post-game Spoils of War sequence (horizontal progression).
+
+| Card Name | Type | Effect |
+| :--- | :--- | :--- |
+| **[Adrenaline]** | Skill | Draw 2 cards. |
+| **[Transfusion]** | Skill | Heal 8 HP. Increases Blood Debt by 1. |
+| **[Scavenge]** | Skill | Return 1 random card from Exhaust Pile to your hand. **Exhausts** on play. |
+| **[Blood Shield]** | Defense | Gain 12 Armor. Lose 4 HP (true damage). |
+| **[Absolution]** | Skill | Remove 1 Blood Debt. **Exhausts** on play. |
+| **[Martyr]** | Attack | Deal damage equal to **4× your Blood Debt**. |
+| **[Leech Strike]** | Attack | Deal 4 damage. Heal 4 HP. |
+| **[Shield Bash]** | Attack | Deal damage equal to your **Current Armor**. Remove all Armor. |
 
 ### Blood Debt Mechanic (NEW in v0.4)
 
@@ -85,9 +99,15 @@ Once the Golem's HP drops to or below the enrage threshold **at the start of the
 
 ---
 
-## 6. META-PROGRESSION: ARCHETYPES & BOONS
+## 6. META-PROGRESSION: DECK GROWTH & BOONS
 
-After clearing each level (except the last), the player chooses **one Boon** from a random pair. Boons carry through all subsequent levels.
+After clearing each level (except the last), the player enters the Meta-Progression Phase.
+
+### 6.1 Spoils of War (Deck Growth)
+The player is presented with a Draft Modal containing **3 Random Cards** pulled from the Draftable Card Pool. The player must permanently add exactly **1 Card** to their `globalRunDeck`. This ensures the deck evolves organically across the 5 levels, enabling new systemic combo interactions.
+
+### 6.2 Archetypes & Boons
+After drafting a card, the player chooses **one Boon** from a random pair. Boons carry through all subsequent levels.
 
 ### 6.1 Player Archetypes
 
@@ -113,6 +133,7 @@ After clearing each level (except the last), the player chooses **one Boon** fro
 | **Thick Blood** | 🩸 | [Blood Trade] self-damage costs **2 fewer HP**. The **first** [Blood Trade] played each turn generates **no Blood Debt**. |
 | **Enduring Insight** | ✨ | [Insight]'s ×1.5 multiplier persists for **2 turns** instead of 1. |
 | **Hemorrhage** | 🥀 | [Blood Trade] deals **+4 damage**, but generates **2 Blood Debt** markers instead of 1. |
+| **Blood Surge** | 💉 | **Unlocks at Level 3.** Unlocks a glowing UI button to artificially extend Action Capacity. Pay 1 Blood Debt for **+1 Action** this turn. Limit 1 use per turn. |
 | **Last Rites** | ⚰️ | **Once per run:** Survive a killing blow at **1 HP** instead of dying. Consumed on use. |
 
 #### Iron Sentinel Boons

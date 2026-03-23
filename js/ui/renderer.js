@@ -15,7 +15,8 @@ function renderHand(state) {
   state.deck.hand.forEach((card, idx) => {
     const selOrder   = state.selectedCards.indexOf(idx); // -1 if not selected
     const isSelected = selOrder !== -1;
-    const isDisabled = !isSelected && state.cardsPlayedThisTurn >= 3;
+    const maxPlays = (typeof state !== 'undefined' && state.maxPlaysThisTurn) ? state.maxPlaysThisTurn : 3;
+    const isDisabled = !isSelected && state.cardsPlayedThisTurn >= maxPlays;
 
     const el = document.createElement('div');
     el.className = `card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`;
@@ -118,6 +119,10 @@ function updateDeckUI(state) {
 
 function updatePlayCounter(state) {
   document.getElementById('played-count').textContent = state.cardsPlayedThisTurn;
+  const maxPlaysEl = document.getElementById('max-plays');
+  if (maxPlaysEl) {
+    maxPlaysEl.textContent = (typeof state !== 'undefined' && state.maxPlaysThisTurn) ? state.maxPlaysThisTurn : 3;
+  }
 }
 
 function updateTurnCounter(state) {
@@ -132,18 +137,37 @@ function updateLevelCounter() {
 function updateEndTurnBtn() {
   const btn = document.getElementById('end-turn-btn');
   if (!btn) return;
-  btn.disabled = state.cardsPlayedThisTurn < 3;
+  // Fallback to 3 if state is not fully initialized
+  const maxPlays = (typeof state !== 'undefined' && state.maxPlaysThisTurn) ? state.maxPlaysThisTurn : 3;
+  btn.disabled = state.cardsPlayedThisTurn < maxPlays;
+}
+
+function updateBloodSurgeBtn(state) {
+  const btn = document.getElementById('blood-surge-btn');
+  if (!btn) return;
+  
+  if (!globalPlayerBoons.includes('bloodSurge')) {
+    btn.classList.add('hidden');
+    return;
+  }
+  btn.classList.remove('hidden');
+
+  btn.disabled = (state.phase !== 'player') || (state.player && state.player.bloodSurgeUsedThisTurn);
 }
 
 function updatePlaySelectedBtn() {
   const btn = document.getElementById('play-selected-btn');
   if (!btn) return;
   const n = state.selectedCards.length;
-  if (n === 0 || state.cardsPlayedThisTurn >= 3) {
+  const maxPlays = (typeof state !== 'undefined' && state.maxPlaysThisTurn) ? state.maxPlaysThisTurn : 3;
+  const maxAllowed = maxPlays - state.cardsPlayedThisTurn;
+  
+  if (n === 0 || state.cardsPlayedThisTurn >= maxPlays) {
     btn.classList.add('hidden');
   } else {
     btn.classList.remove('hidden');
-    btn.textContent = `Play ${n} Card${n > 1 ? 's' : ''} ✓`;
+    // E.g., "Play 1 / 3 Cards ✓"
+    btn.textContent = `Play ${n} / ${maxAllowed} Card${maxAllowed !== 1 ? 's' : ''} ✓`;
   }
 }
 
@@ -243,4 +267,5 @@ function updateAllUI(state) {
   renderHand(state);
   updatePlaySelectedBtn();
   updateEndTurnBtn();
+  updateBloodSurgeBtn(state);
 }

@@ -139,6 +139,70 @@ body {
   transform: translateY(0);
 }
 
+.status-bar-top {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.status-bar-top .btn-blood-surge {
+  position: absolute;
+  right: 20px;
+}
+
+/* Blood Surge button */
+.btn-blood-surge {
+  font-family: var(--font-head);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: linear-gradient(135deg, #a31d1d 0%, #631212 100%);
+  border: 1px solid var(--red-dim);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  box-shadow: 0 4px 14px rgba(181, 43, 43, 0.35);
+}
+.btn-blood-surge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(181, 43, 43, 0.55);
+  filter: brightness(1.2);
+}
+.btn-blood-surge:active {
+  transform: translateY(0);
+}
+.btn-blood-surge:disabled {
+  filter: grayscale(0.8) brightness(0.6);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#draft-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.4s ease;
+}
+
+#draft-modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-panel);
+  padding: 52px 60px;
+  text-align: center;
+  min-width: 600px;
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+}
+
 @keyframes confirmAppear {
   from {
     opacity: 0;

@@ -144,4 +144,136 @@ const CARD_CATALOG = {
       updatePlayerUI(state);
     },
   },
+
+  adrenaline: {
+    id: 'adrenaline',
+    name: 'Adrenaline',
+    type: 'skill',
+    glyph: '⚡',
+    getEffectText: () => 'Draw 2 cards.',
+    quantity: 0,
+    play(state) {
+      drawCards(state, 2);
+      log(`⚡ <span class="log-system">Adrenaline → Drew 2 cards.</span>`);
+    },
+  },
+
+  transfusion: {
+    id: 'transfusion',
+    name: 'Transfusion',
+    type: 'skill',
+    glyph: '🧪',
+    getEffectText: () => 'Heal 8 HP. (+1 Debt)',
+    quantity: 0,
+    play(state) {
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 8);
+      state.player.bloodDebt += 1;
+      log(`🧪 <span class="log-buff">Transfusion → Healed 8 HP. Blood Debt increases by 1 (Total: ${state.player.bloodDebt}).</span>`);
+      updatePlayerUI(state);
+    },
+  },
+
+  scavenge: {
+    id: 'scavenge',
+    name: 'Scavenge',
+    type: 'skill',
+    glyph: '♻️',
+    getEffectText: () => 'Return 1 random card from Exhaust Pile to your hand.',
+    quantity: 0,
+    play(state) {
+      if (state.deck.exhaustPile.length > 0) {
+        const idx = Math.floor(Math.random() * state.deck.exhaustPile.length);
+        const card = state.deck.exhaustPile.splice(idx, 1)[0];
+        state.deck.hand.push(card);
+        log(`♻️ <span class="log-system">Scavenge → Retrieved [${card.name}] from the Exhaust Pile!</span>`);
+      } else {
+        log(`♻️ <span class="log-system">Scavenge → Exhaust Pile is empty. Nothing to retrieve.</span>`);
+      }
+    },
+  },
+
+  bloodShield: {
+    id: 'bloodShield',
+    name: 'Blood Shield',
+    type: 'defend',
+    glyph: '🩸',
+    getEffectText: () => 'Gain 12 Armor. Lose 4 HP.',
+    quantity: 0,
+    play(state) {
+      state.player.armor += 12;
+      applyPlayerSelfDamage(state, 4);
+      log(`🩸 <span class="log-defend">Blood Shield → +12 Armor. -4 HP (true damage).</span>`);
+      applyLastRitesIfNeeded(state);
+      updatePlayerUI(state);
+    },
+  },
+
+  absolution: {
+    id: 'absolution',
+    name: 'Absolution',
+    type: 'skill',
+    glyph: '🕊️',
+    getEffectText: () => 'Remove 1 Blood Debt.',
+    quantity: 0,
+    play(state) {
+      if (state.player.bloodDebt > 0) {
+        state.player.bloodDebt -= 1;
+        log(`🕊️ <span class="log-buff">Absolution → Blood Debt reduced by 1 (Total: ${state.player.bloodDebt}).</span>`);
+      } else {
+        log(`🕊️ <span class="log-system">Absolution → Blood Debt is already 0.</span>`);
+      }
+      updatePlayerUI(state);
+    },
+  },
+
+  martyr: {
+    id: 'martyr',
+    name: 'Martyr',
+    type: 'attack',
+    glyph: '💣',
+    getEffectText: () => {
+      const debt = (typeof state !== 'undefined' && state.player) ? state.player.bloodDebt : 0;
+      return `Deal ${debt * 4} damage.<br>(4x Blood Debt)`;
+    },
+    quantity: 0,
+    play(state) {
+      const dmg = state.player.bloodDebt * 4;
+      dealDamageToEnemy(state, dmg);
+      log(`💣 <span class="log-damage">Martyr → Dealt ${dmg} damage from ${state.player.bloodDebt} Blood Debt.</span>`);
+    },
+  },
+
+  leechStrike: {
+    id: 'leechStrike',
+    name: 'Leech Strike',
+    type: 'attack',
+    glyph: '🦇',
+    getEffectText: () => 'Deal 4 damage. Heal 4 HP.',
+    quantity: 0,
+    play(state) {
+      dealDamageToEnemy(state, 4);
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 4);
+      log(`🦇 <span class="log-damage">Leech Strike → Dealt 4 damage, healed 4 HP.</span>`);
+      updatePlayerUI(state);
+    },
+  },
+
+  shieldBash: {
+    id: 'shieldBash',
+    name: 'Shield Bash',
+    type: 'attack',
+    glyph: '💥',
+    getEffectText: () => {
+      const armor = (typeof state !== 'undefined' && state.player) ? state.player.armor : 0;
+      return `Deal ${armor} damage. Remove all Armor.`;
+    },
+    quantity: 0,
+    play(state) {
+      const dmg = state.player.armor;
+      state.player.armor = 0;
+      dealDamageToEnemy(state, dmg);
+      log(`💥 <span class="log-damage">Shield Bash → Expended armor to deal ${dmg} damage.</span>`);
+      updatePlayerUI(state);
+    },
+  },
 };

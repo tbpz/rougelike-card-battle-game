@@ -23,6 +23,7 @@ const BOONS_CATALOG = {
   thickBlood:     { archetype: 'bloodPriest',  name: 'Thick Blood',      glyph: '🩸', desc: '[Blood Trade] costs 2 fewer HP. The first [Blood Trade] each turn generates no Blood Debt.' },
   enduringInsight:{ archetype: 'bloodPriest',  name: 'Enduring Insight', glyph: '✨', desc: '[Insight] lasts for two turns instead of one.' },
   hemorrhage:     { archetype: 'bloodPriest',  name: 'Hemorrhage',       glyph: '🥀', desc: '[Blood Trade] deals +4 damage, but generates 2 Blood Debt markers instead of 1.' },
+  bloodSurge:     { archetype: 'bloodPriest',  name: 'Blood Surge',      glyph: '💉', desc: 'Unlocks the ability to pay 1 Blood Debt for +1 Action.' },
   lastRites:      { archetype: 'bloodPriest',  name: 'Last Rites',       glyph: '⚰️', desc: 'Once per run, survive a killing blow at 1 HP.' },
 
   // ── Iron Sentinel ─────────────────────────────────────

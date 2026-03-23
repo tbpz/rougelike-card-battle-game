@@ -13,6 +13,11 @@ let globalPlayerBoons = [];  // Acquired boon IDs for this run
 let globalConsumedBoons = []; // Single-use boons spent this run
 let globalPlayerHp = 0;       // Persistent current HP
 let globalPlayerMaxHp = 0;    // Persistent max HP
+let globalRunDeck = [];       // Persistent deck of card IDs
+const draftPool = [
+  'adrenaline', 'transfusion', 'scavenge', 'bloodShield',
+  'absolution', 'martyr', 'leechStrike', 'shieldBash'
+];
 
 // ── Battle-scoped state (reset each level) ──────────────
 let state = {};
@@ -45,6 +50,7 @@ function createInitialState(levelConfig) {
       insightMultiplier:    1,
       bloodDebt:            0,
       bloodTradePlayedThisTurn: false,
+      bloodSurgeUsedThisTurn: false,
     },
     enemy: {
       maxHp:     levelConfig.enemyHp,
@@ -59,6 +65,7 @@ function createInitialState(levelConfig) {
       hand:        [],
       exhaustPile: [],
     },
+    maxPlaysThisTurn:    3,
     cardsPlayedThisTurn: 0,
     selectedCards:       [],
   };
