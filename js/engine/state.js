@@ -53,11 +53,11 @@ function createInitialState(levelConfig) {
       bloodSurgeUsedThisTurn: false,
     },
     enemy: {
-      maxHp:     levelConfig.enemyHp,
-      hp:        levelConfig.enemyHp,
-      armor:     0,
-      turnIndex: 0,
-      enraged:   false,
+      maxHp:      levelConfig.enemyHp,
+      hp:         levelConfig.enemyHp,
+      armor:      0,
+      enraged:    false,               // True once the enrage override fires
+      intentState: createIntentState(), // Managed by intentEngine.js
     },
     deck: {
       drawPile:    [],

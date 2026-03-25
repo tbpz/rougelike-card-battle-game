@@ -89,13 +89,22 @@ function updateEnemyUI(state) {
   document.getElementById('enemy-max-hp').textContent = e.maxHp;
   document.getElementById('enemy-hp-bar').style.width = pct + '%';
 
-  const intent      = getIntent(state);
-  const dmgEl       = document.getElementById('intent-dmg');
+  const intent = getIntentForDisplay(state);
+  const dmgEl  = document.getElementById('intent-dmg');
   document.getElementById('intent-icon').textContent = intent.icon;
   document.getElementById('intent-name').textContent = intent.name;
-  if (intent.damage > 0) {
-    dmgEl.textContent = `${intent.damage} dmg`;
-    dmgEl.className   = 'intent-dmg' + (intent.type === 'enrage' ? ' enrage' : '');
+
+  if (intent.type === 'attack') {
+    // displayDamage is stamped by intentEngine._stampDamage() at resolve time.
+    const dmgVal = typeof intent.displayDamage === 'number' ? intent.displayDamage : '??';
+    dmgEl.textContent = dmgVal > 0 ? `${dmgVal} dmg` : '(no dmg)';
+    dmgEl.className   = 'intent-dmg' + (intent.id === 'fatalStrike' ? ' enrage' : '');
+  } else if (intent.type === 'defend' || intent.type === 'buff') {
+    dmgEl.textContent = '(buff)';
+    dmgEl.className   = 'intent-dmg safe';
+  } else if (intent.type === 'debuff') {
+    dmgEl.textContent = '(debuff)';
+    dmgEl.className   = 'intent-dmg';
   } else {
     dmgEl.textContent = '(no dmg)';
     dmgEl.className   = 'intent-dmg safe';
@@ -109,6 +118,7 @@ function updateEnemyUI(state) {
     enemyArmorBadge.classList.add('hidden');
   }
 }
+
 
 // ─── Deck / Counter Panels ─────────────────────────────
 function updateDeckUI(state) {

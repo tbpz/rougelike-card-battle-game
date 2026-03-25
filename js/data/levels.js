@@ -17,7 +17,7 @@ const LEVELS = [
       '💤 Enrages at 10 HP'
     ],
     playerHp: 35, enemyHp: 35,
-    cycle: ['bash', 'recharge', 'shatter'],
+    enemyId: 'ancient_golem',
     bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 10, bloodTradeCost: 3,
     deck: { strike: 4, defend: 5, bloodTrade: 2, insight: 2 }
   },
@@ -31,7 +31,7 @@ const LEVELS = [
       '⚡ Enrages at 15 HP'
     ],
     playerHp: 30, enemyHp: 60,
-    cycle: ['shatter', 'bash', 'prepare'],
+    enemyId: 'ancient_golem',
     bashDmg: 10, shatterDmg: 20, enrageAt: 22, fatalDmg: 15, bloodTradeCost: 4,
     deck: { strike: 4, defend: 4, bloodTrade: 2, insight: 2 }
   },
@@ -44,7 +44,7 @@ const LEVELS = [
       '⚠️ Enrages earlier (at 20 HP)'
     ],
     playerHp: 28, enemyHp: 75,
-    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    enemyId: 'ancient_golem',
     bashDmg: 9, shatterDmg: 14, enrageAt: 34, fatalDmg: 18, shieldArmor: 8, bloodTradeCost: 5,
     deck: { strike: 4, defend: 4, bloodTrade: 1, insight: 2 }
   },
@@ -57,7 +57,7 @@ const LEVELS = [
       '🔥 Enrages very early (at 25 HP)'
     ],
     playerHp: 25, enemyHp: 85,
-    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    enemyId: 'ancient_golem',
     bashDmg: 10, shatterDmg: 15, enrageAt: 47, fatalDmg: 22, shieldArmor: 10, bloodTradeCost: 6,
     deck: { strike: 3, defend: 3, bloodTrade: 3, insight: 2 }
   },
@@ -71,7 +71,7 @@ const LEVELS = [
       '🏴‍☠️ Fatal Strike deals 20 damage'
     ],
     playerHp: 22, enemyHp: 100,
-    cycle: ['bash', 'shatter', 'bash', 'shield'],
+    enemyId: 'ancient_golem',
     bashDmg: 11, shatterDmg: 16, enrageAt: 65, fatalDmg: 28, shieldArmor: 12, bloodTradeCost: 7,
     deck: { strike: 3, defend: 2, bloodTrade: 3, insight: 4 }
   }

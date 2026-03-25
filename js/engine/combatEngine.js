@@ -15,49 +15,38 @@ function checkLose(state) { return state.player.hp <= 0; }
 // ─── Enemy AI ──────────────────────────────────────────
 
 /**
- * Resolves the current enemy intent based on state.
+ * Returns the currently resolved intent for UI display.
+ * The intent was pre-computed by resolveNextIntent() at the
+ * start of the player's turn.
  * @param {object} state
  * @returns {object} Intent definition object
  */
-function getIntent(state) {
-  const levelConfig = LEVELS[globalLevelIndex];
-  const intents     = getLevelIntents(levelConfig);
-  if (state.enemy.enraged) return intents.fatalStrike;
-  const intentKey = levelConfig.cycle[state.enemy.turnIndex % levelConfig.cycle.length];
-  return intents[intentKey];
+function getIntentForDisplay(state) {
+  const intent = state.enemy.intentState && state.enemy.intentState.currentIntent;
+  if (intent) return intent;
+  // Fallback to a neutral display if nothing is resolved yet
+  return { name: '—', icon: '⚙️', type: 'safe', damage: 0 };
 }
 
 /**
- * Checks and activates enrage if the HP threshold is met.
+ * Executes the cached enemy intent, advances cooldowns,
+ * and pre-resolves the NEXT intent so the UI can display it
+ * immediately after the enemy acts.
  * @param {object} state
  */
-function checkEnrage(state) {
+function enemyAct(state) {
   const levelConfig = LEVELS[globalLevelIndex];
-  if (!state.enemy.enraged && state.enemy.hp <= levelConfig.enrageAt) {
+  executeCurrentIntent(state, levelConfig);
+
+  // After acting, update the enraged flag so the UI can react
+  if (state.enemy.intentState.enrageOverrideTriggered && !state.enemy.enraged) {
     state.enemy.enraged = true;
     log(`<span class="log-blood">☠️ The Golem ENRAGES! Fatal Strike every turn!</span>`);
     document.getElementById('enemy-panel').classList.add('enraged');
     triggerShake();
   }
-}
-
-/**
- * Executes the enemy's turn: applies damage/effects and advances turn index.
- * @param {object} state
- */
-function enemyAct(state) {
-  const intent = getIntent(state);
-  if (intent.damage > 0) {
-    applyEnemyAttackDamage(state, intent);
-  } else {
-    log(`<span class="log-system">⚙️ Golem recharges. Nothing happens.</span>`);
-  }
 
   applyLastRitesIfNeeded(state);
-
-  if (!state.enemy.enraged) {
-    state.enemy.turnIndex++;
-  }
 }
 
 // ─── Turn Flow ─────────────────────────────────────────
@@ -127,14 +116,16 @@ function startTurn(state) {
     state.player.insightMultiplier = 1;
   }
 
-  // Check enrage at start of player turn (per PRD)
-  checkEnrage(state);
+  // Pre-resolve the enemy's next intent BEFORE drawing cards,
+  // so the UI can show what the enemy will do this turn.
+  const levelConfig = LEVELS[globalLevelIndex];
+  resolveNextIntent(state, levelConfig);
 
   // Draw 5 cards
   drawCards(state, 5);
 
   // Log turn header with current intent
-  const intent = getIntent(state);
+  const intent = getIntentForDisplay(state);
   logTurnHeader(state.turn, intent);
 
   // Keep End Turn locked until 3 cards have been played
