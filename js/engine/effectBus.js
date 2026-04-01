@@ -6,13 +6,18 @@
    ALL damage to player or enemy must route through here.
    This ensures triggered boons (War Tax, Thorns, Last Rites)
    always fire reliably regardless of damage source.
+
+   NO DOM ACCESS: Visual effects are signaled via state._pendingEffects[].
+   The UI layer (renderer.js) consumes and executes them via
+   processPendingEffects(state).
 ══════════════════════════════════════════ */
 
 /**
- * Deals damage to the enemy, applies flash animation.
+ * Deals damage to the enemy, respecting their armor.
+ * Signals a flash animation via _pendingEffects (no direct DOM access).
  * ALWAYS use this instead of mutating state.enemy.hp directly.
  * @param {object} state
- * @param {number} dmg - Raw damage amount (before any caps)
+ * @param {number} dmg - Raw damage amount (before armor)
  */
 function dealDamageToEnemy(state, dmg) {
   const blocked = Math.min(state.enemy.armor, dmg);
@@ -28,9 +33,24 @@ function dealDamageToEnemy(state, dmg) {
   }
 
   state.enemy.hp = Math.max(0, state.enemy.hp - realDmg);
-  const panel = document.getElementById('enemy-panel');
-  panel.classList.add('flash-damage');
-  panel.addEventListener('animationend', () => panel.classList.remove('flash-damage'), { once: true });
+  // Signal UI layer to apply flash animation
+  state._pendingEffects = state._pendingEffects || [];
+  state._pendingEffects.push({ type: 'flash-enemy' });
+  updateEnemyUI(state);
+}
+
+/**
+ * Deals armor-piercing damage to the enemy — bypasses all enemy armor.
+ * Used by cards like Overflow. Still routes through the bus so other
+ * reactions (e.g., future boons) can hook in.
+ * @param {object} state
+ * @param {number} dmg - True damage (ignores enemy armor)
+ */
+function dealArmorPiercingDamage(state, dmg) {
+  if (dmg <= 0) return;
+  state.enemy.hp = Math.max(0, state.enemy.hp - dmg);
+  state._pendingEffects = state._pendingEffects || [];
+  state._pendingEffects.push({ type: 'flash-enemy' });
   updateEnemyUI(state);
 }
 
@@ -42,19 +62,19 @@ function dealDamageToEnemy(state, dmg) {
  */
 function applyPlayerSelfDamage(state, amount) {
   if (amount <= 0) return;
-  
+
   const blocked = Math.min(state.player.armor, amount);
   const realDamage = amount - blocked;
-  
+
   state.player.armor = Math.max(0, state.player.armor - blocked);
   state.player.hp = Math.max(0, state.player.hp - realDamage);
-  
+
   if (blocked > 0) {
     log(`<span class="log-system">🛡️ Shield absorbed ${blocked} self-damage.</span>`);
   }
-  
+
   // War Tax: self-damage also triggers it
-  if (realDamage > 0 && globalPlayerBoons.includes('warTax')) {
+  if (realDamage > 0 && RunState.playerBoons.includes('warTax')) {
     dealDamageToEnemy(state, 2);
     log(`⚖️ <span class="log-damage">War Tax → 2 damage returned to Golem!</span>`);
   }
@@ -79,11 +99,11 @@ function applyEnemyAttackDamage(state, intent) {
   }
 
   // Reactive boons — only trigger on real (unblocked) damage
-  if (realDamage > 0 && globalPlayerBoons.includes('thorns')) {
+  if (realDamage > 0 && RunState.playerBoons.includes('thorns')) {
     dealDamageToEnemy(state, 3);
     log(`🌵 <span class="log-damage">Thorns → 3 damage returned to Golem!</span>`);
   }
-  if (realDamage > 0 && globalPlayerBoons.includes('warTax')) {
+  if (realDamage > 0 && RunState.playerBoons.includes('warTax')) {
     dealDamageToEnemy(state, 2);
     log(`⚖️ <span class="log-damage">War Tax → 2 damage returned to Golem!</span>`);
   }
@@ -98,11 +118,11 @@ function applyEnemyAttackDamage(state, intent) {
 function applyLastRitesIfNeeded(state) {
   if (
     state.player.hp <= 0 &&
-    globalPlayerBoons.includes('lastRites') &&
-    !globalConsumedBoons.includes('lastRites')
+    RunState.playerBoons.includes('lastRites') &&
+    !RunState.consumedBoons.includes('lastRites')
   ) {
     state.player.hp = 1;
-    globalConsumedBoons.push('lastRites');
+    RunState.consumedBoons.push('lastRites');
     log(`⚰️ <span class="log-buff">Last Rites activates! You survive at 1 HP!</span>`);
     updateActiveBoonsUI();
   }

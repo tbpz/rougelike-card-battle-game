@@ -1137,3 +1137,104 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--gold-dim) transparent;
 }
+
+/* ══ VP (VOW POINT) COST BADGE ══ */
+.card-vp-badge {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-family: var(--font-head);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 999px;
+  pointer-events: none;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.card-vp-badge.vp-free {
+  background: rgba(30, 138, 74, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(30, 138, 74, 0.35);
+}
+
+.card-vp-badge.vp-normal {
+  background: rgba(120, 90, 30, 0.1);
+  color: var(--text-muted);
+  border: 1px solid var(--border-dim);
+}
+
+.card-vp-badge.vp-heavy {
+  background: rgba(180, 83, 9, 0.12);
+  color: var(--amber);
+  border: 1px solid rgba(180, 83, 9, 0.35);
+}
+
+/* ── #vp-remaining colour feedback ── */
+#vp-remaining {
+  color: var(--gold);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+#vp-max {
+  color: var(--text-muted);
+}
+
+/* ══ SMOLDER STATUS BADGE ══ */
+.smolder-badge {
+  border-color: rgba(220, 80, 10, 0.4) !important;
+  color: #c05010 !important;
+  background: rgba(220, 80, 10, 0.08) !important;
+  animation: pulse-smolder 1.4s infinite;
+}
+
+@keyframes pulse-smolder {
+  0%, 100% { box-shadow: 0 0 4px rgba(220, 80, 10, 0.2); }
+  50%       { box-shadow: 0 0 12px rgba(220, 80, 10, 0.55); }
+}
+
+/* ══ FORESIGHT MODAL ══ */
+#foresight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+#foresight-modal {
+  background: var(--bg-panel);
+  border: 1px solid rgba(109, 63, 192, 0.5);
+  border-radius: var(--radius-panel);
+  padding: 36px 48px;
+  text-align: center;
+  box-shadow:
+    0 0 24px rgba(109, 63, 192, 0.18),
+    var(--shadow-card);
+  max-width: 600px;
+  width: 90%;
+}
+
+#foresight-options-container {
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+/* ══ SKILL CARD COLOUR ══ */
+.card[data-type="skill"] {
+  border-color: rgba(30, 138, 74, 0.3);
+}
+
+.card[data-type="skill"] .card-type-bar {
+  background: var(--green);
+}
+
+.card[data-type="skill"] .card-glyph {
+  filter: drop-shadow(0 0 5px rgba(30, 138, 74, 0.4));
+}

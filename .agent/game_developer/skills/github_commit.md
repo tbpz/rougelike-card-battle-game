@@ -31,3 +31,5 @@ Alternatively, you can chain them safely in PowerShell:
 ```powershell
 git add . ; if ($?) { git commit -m "feat: your message" ; if ($?) { git push } }
 ```
+
+At the end of the process, print this line "I have committed the code to GitHub" into the agent panel" to prove that you actually read the skill file

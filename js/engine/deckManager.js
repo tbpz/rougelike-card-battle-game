@@ -8,26 +8,28 @@
 
 const EXHAUST_ON_DISCARD = new Set(['bloodTrade', 'insight', 'scavenge', 'absolution']);
 
+const STARTER_DECK = { strike: 4, defend: 4, bloodTrade: 1, insight: 1 };
+
 /**
  * Builds an unshuffled deck array from the persistent run deck.
- * Initializes the run deck from the level config if it's the first level.
+ * Initializes the run deck from the STARTER_DECK if it's the first level.
  * @param {object} levelConfig
  * @returns {object[]} Array of card copies
  */
 function buildDeck(levelConfig) {
   const deck = [];
-  
-  if (globalLevelIndex === 0 || globalRunDeck.length === 0) {
-    globalRunDeck = [];
-    const reqs = levelConfig.deck;
+
+  if (RunState.levelIndex === 0 || RunState.runDeck.length === 0) {
+    RunState.runDeck = [];
+    const reqs = STARTER_DECK;
     for (const [id, count] of Object.entries(reqs)) {
       for (let i = 0; i < count; i++) {
-        globalRunDeck.push(id);
+        RunState.runDeck.push(id);
       }
     }
   }
 
-  for (const id of globalRunDeck) {
+  for (const id of RunState.runDeck) {
     const cardProto = CARD_CATALOG[id];
     if (cardProto) {
       deck.push({ ...cardProto });
@@ -40,19 +42,34 @@ function buildDeck(levelConfig) {
 
 /**
  * Adds a new card to the persistent run deck.
- * @param {string} cardId 
+ * @param {string} cardId
  */
 function addCardToRunDeck(cardId) {
-  globalRunDeck.push(cardId);
+  RunState.runDeck.push(cardId);
 }
 
 /**
- * Retrieves a specified number of distinct random cards from the draft pool.
- * @param {number} count 
+ * Retrieves a specified number of distinct random cards from the tiered draft pool.
+ * Only cards from tiers 1 through the current level are available.
+ * Cards already in the run deck are excluded (no duplicates).
+ * @param {number} count
  * @returns {string[]} Array of card IDs
  */
 function getDraftChoices(count = 3) {
-  const pool = [...draftPool];
+  // Unlock a new tier every 2 levels
+  // L1/L2 → Tier 1, L3/L4 → Tier 2, L5/L6 → Tier 3, L7 → Tier 4
+  const maxTier = Math.min(4, Math.ceil((RunState.levelIndex + 1) / 2));
+
+  let pool = [];
+  for (let tier = 1; tier <= maxTier; tier++) {
+    const tierCards = DRAFT_TIERS[tier] || [];
+    for (const id of tierCards) {
+      if (!RunState.runDeck.includes(id)) {
+        pool.push(id);
+      }
+    }
+  }
+
   const choices = [];
   for (let i = 0; i < count; i++) {
     if (pool.length === 0) break;

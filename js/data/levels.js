@@ -11,68 +11,100 @@ const LEVELS = [
     title: 'Level 1: The Awakening',
     flavor: 'The Golem is dormant. Learn the Vow without pressure.',
     rules: [
-      '🛡️ Extra Defends in deck',
+      '⚡ 3 VP per turn — spend wisely',
       '📉 Enemy deals reduced damage',
       '⏱️ Safe "Recharge" turn every 3rd turn',
-      '💤 Enrages at 10 HP'
+      '💤 Enrages at 8 HP'
     ],
-    playerHp: 35, enemyHp: 35,
+    enemyHp: 30,
     enemyId: 'ancient_golem',
-    bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 10, bloodTradeCost: 3,
-    deck: { strike: 4, defend: 5, bloodTrade: 2, insight: 2 }
+    baseVP: 3,
+    bashDmg: 3, shatterDmg: 5, enrageAt: 8, fatalDmg: 6
   },
   {
-    title: 'Level 2: Calibrated Pressure',
-    flavor: 'The original Vow. Block carefully or be broken.',
+    title: 'Level 2: First Blood',
+    flavor: 'The Golem stirs. Your first real opponent.',
     rules: [
-      '⚖️ Standard 3/5 Vow deck ratios',
+      '⚡ 3 VP per turn — spend wisely',
       '⚠️ Enemy prepares a massive attack. Defend or be broken.',
       '⏱️ Safe "Recharge" turn every 3rd turn',
-      '⚡ Enrages at 15 HP'
+      '⚡ Enrages at 10 HP'
     ],
-    playerHp: 30, enemyHp: 60,
+    enemyHp: 40,
     enemyId: 'ancient_golem',
-    bashDmg: 10, shatterDmg: 20, enrageAt: 22, fatalDmg: 15, bloodTradeCost: 4,
-    deck: { strike: 4, defend: 4, bloodTrade: 2, insight: 2 }
+    baseVP: 3,
+    bashDmg: 5, shatterDmg: 8, enrageAt: 10, fatalDmg: 8
   },
   {
-    title: 'Level 3: The Relentless',
+    title: 'Level 3: Calibrated Pressure',
+    flavor: 'The original Vow. Block carefully or be broken.',
+    rules: [
+      '🛡️ Enemy gains Fortify (Armor)',
+      '⚠️ Enrages at 15 HP'
+    ],
+    enemyHp: 55,
+    enemyId: 'ancient_golem',
+    baseVP: 3,
+    bashDmg: 7, shatterDmg: 12, enrageAt: 15, fatalDmg: 12, shieldArmor: 6
+  },
+  {
+    title: 'Level 4: The Crucible',
+    flavor: 'Survival alone won\'t save you. You need a plan.',
+    rules: [
+      '💀 Expect a longer battle',
+      '⚠️ Enrages at 18 HP'
+    ],
+    enemyHp: 65,
+    enemyId: 'ancient_golem',
+    baseVP: 3,
+    bashDmg: 8, shatterDmg: 14, enrageAt: 18, fatalDmg: 14, shieldArmor: 8
+  },
+  {
+    title: 'Level 5: The Relentless',
     flavor: 'The Golem abandons rest. You must find your own openings.',
     rules: [
       '🚫 No "Recharge" turn (Bash → Shatter → Bash)',
-      '🩸 1 fewer Blood Trade in deck',
-      '⚠️ Enrages earlier (at 20 HP)'
+      '⚠️ Enrages at 28 HP'
     ],
-    playerHp: 28, enemyHp: 75,
+    enemyHp: 75,
     enemyId: 'ancient_golem',
-    bashDmg: 9, shatterDmg: 14, enrageAt: 34, fatalDmg: 18, shieldArmor: 8, bloodTradeCost: 5,
-    deck: { strike: 4, defend: 4, bloodTrade: 1, insight: 2 }
+    baseVP: 3,
+    bashDmg: 9, shatterDmg: 15, enrageAt: 28, fatalDmg: 16, shieldArmor: 8
   },
   {
-    title: 'Level 4: Iron Vow',
+    title: 'Level 6: Blood Meridian',
+    flavor: 'Pain is inevitable. Choose whose.',
+    rules: [
+      '🔥 Punishing damage numbers',
+      '⚠️ Enrages at 35 HP'
+    ],
+    enemyHp: 85,
+    enemyId: 'ancient_golem',
+    baseVP: 3,
+    bashDmg: 10, shatterDmg: 16, enrageAt: 35, fatalDmg: 18, shieldArmor: 10
+  },
+  {
+    title: 'Level 7: Iron Vow',
     flavor: 'The deck floods with blood. Pain is your only fuel.',
     rules: [
-      '💀 Deck replaced: Heavy Blood Trade (+3 self-damage)',
-      '🗡️ Start at only 25 Max HP',
-      '🔥 Enrages very early (at 25 HP)'
+      '🗡️ Lethal if unblocked',
+      '☠️ Enrages at 45 HP (Half health)'
     ],
-    playerHp: 25, enemyHp: 85,
+    enemyHp: 95,
     enemyId: 'ancient_golem',
-    bashDmg: 10, shatterDmg: 15, enrageAt: 47, fatalDmg: 22, shieldArmor: 10, bloodTradeCost: 6,
-    deck: { strike: 3, defend: 3, bloodTrade: 3, insight: 2 }
+    baseVP: 3,
+    bashDmg: 11, shatterDmg: 18, enrageAt: 45, fatalDmg: 22, shieldArmor: 10
   },
   {
-    title: 'Level 5: The Final Vow',
-    flavor: 'The absolute limit of the Vow. One mistake is fatal.',
+    title: 'Level 8: The Final Vow',
+    flavor: 'The absolute limit. One mistake is fatal.',
     rules: [
-      '✨ Volatile Deck: 4 Insights, only 2 Defends',
-      '💔 Start at bare minimum 22 Max HP',
-      '☠️ Enrages at 30 HP (over half health!)',
-      '🏴‍☠️ Fatal Strike deals 20 damage'
+      '🏴‍☠️ Maximum brutality',
+      '☠️ Enrages at 60 HP (Over half health!)'
     ],
-    playerHp: 22, enemyHp: 100,
+    enemyHp: 110,
     enemyId: 'ancient_golem',
-    bashDmg: 11, shatterDmg: 16, enrageAt: 65, fatalDmg: 28, shieldArmor: 12, bloodTradeCost: 7,
-    deck: { strike: 3, defend: 2, bloodTrade: 3, insight: 4 }
+    baseVP: 3,
+    bashDmg: 12, shatterDmg: 20, enrageAt: 60, fatalDmg: 26, shieldArmor: 12
   }
 ];

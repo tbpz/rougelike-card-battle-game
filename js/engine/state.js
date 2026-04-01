@@ -3,21 +3,32 @@
 /* ══════════════════════════════════════════
    ENGINE — Global Run State
    The single source of truth for all mutable game data.
-   UI and engine modules read from this; mutations should
-   go through dedicated engine functions, not direct access.
+   
+   RunState:  Persistent globals for a full game run.
+              Replaces 6 bare module-level let variables.
+   state:     Battle-scoped state object, reset each level.
 ══════════════════════════════════════════ */
 
 // ── Run-scoped globals (persist across levels) ──────────
-let globalLevelIndex  = 0;  // Current level index (0–4)
-let globalPlayerBoons = [];  // Acquired boon IDs for this run
-let globalConsumedBoons = []; // Single-use boons spent this run
-let globalPlayerHp = 0;       // Persistent current HP
-let globalPlayerMaxHp = 0;    // Persistent max HP
-let globalRunDeck = [];       // Persistent deck of card IDs
-const draftPool = [
-  'adrenaline', 'transfusion', 'scavenge', 'bloodShield',
-  'absolution', 'martyr', 'leechStrike', 'shieldBash'
-];
+// Encapsulated in a single object to prevent implicit global coupling.
+const RunState = {
+  levelIndex:    0,  // Current level index (0–7)
+  playerBoons:   [],  // Acquired boon IDs for this run
+  consumedBoons: [], // Single-use boons spent this run
+  playerHp:      0,  // Persistent current HP
+  playerMaxHp:   0,  // Persistent max HP
+  runDeck:       [],  // Persistent deck of card IDs
+
+  /** Resets all run-scoped state back to defaults. Call on new run or defeat. */
+  reset() {
+    this.levelIndex    = 0;
+    this.playerBoons   = [];
+    this.consumedBoons = [];
+    this.playerHp      = 0;
+    this.playerMaxHp   = 0;
+    this.runDeck       = [];
+  },
+};
 
 // ── Battle-scoped state (reset each level) ──────────────
 let state = {};
@@ -29,21 +40,20 @@ let state = {};
  */
 function createInitialState(levelConfig) {
   // Setup persistent HP if starting a new run
-  if (globalLevelIndex === 0 || globalPlayerMaxHp === 0) {
-    globalPlayerMaxHp = levelConfig.playerHp;
-    globalPlayerHp    = levelConfig.playerHp;
-  } else {
-    // Level override restricts maximum HP (e.g. "Start at 25 Max HP")
-    globalPlayerMaxHp = levelConfig.playerHp;
-    globalPlayerHp    = Math.min(globalPlayerHp, globalPlayerMaxHp);
+  if (RunState.levelIndex === 0 || RunState.playerMaxHp === 0) {
+    RunState.playerMaxHp = 40;
+    RunState.playerHp    = 40;
   }
+  // Otherwise, HP simply carries over from the previous level.
+
+  const baseVP = levelConfig.baseVP || 3;
 
   return {
     turn:  1,
     phase: 'player',  // 'player' | 'enemy' | 'over'
     player: {
-      maxHp:                globalPlayerMaxHp,
-      hp:                   globalPlayerHp,
+      maxHp:                RunState.playerMaxHp,
+      hp:                   RunState.playerHp,
       armor:                0,
       insightActive:        false,
       insightActiveDuration: 0,
@@ -51,6 +61,9 @@ function createInitialState(levelConfig) {
       bloodDebt:            0,
       bloodTradePlayedThisTurn: false,
       bloodSurgeUsedThisTurn: false,
+      // Echo & Smolder state
+      echoActive:           false,  // Next card played this turn fires twice
+      smolderDamage:        0,      // Pending damage to deal at start of next turn
     },
     enemy: {
       maxHp:      levelConfig.enemyHp,
@@ -65,8 +78,12 @@ function createInitialState(levelConfig) {
       hand:        [],
       exhaustPile: [],
     },
-    maxPlaysThisTurn:    3,
-    cardsPlayedThisTurn: 0,
+    // VP (Vow Points) — replaces maxPlaysThisTurn hard cap
+    vpMax:               baseVP,   // Total VP available this turn
+    vpRemaining:         baseVP,   // VP left to spend this turn
+    cardsPlayedThisTurn: 0,        // Kept for Momentum boon (3rd card trigger)
     selectedCards:       [],
+    // Pending visual effects to be processed by the UI layer
+    _pendingEffects: [],
   };
 }

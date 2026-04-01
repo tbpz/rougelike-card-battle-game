@@ -31,4 +31,5 @@ const BOONS_CATALOG = {
   fortress:       { archetype: 'ironSentinel', name: 'Fortress',         glyph: '🏰', desc: '[Defend] grants 8 Armor instead of 6.' },
   thorns:         { archetype: 'ironSentinel', name: 'Thorns',           glyph: '🌵', desc: 'Whenever you lose HP to an enemy attack, deal 3 damage to the Golem.' },
   grit:           { archetype: 'ironSentinel', name: 'Grit',             glyph: '💪', desc: 'At the start of each turn, gain 3 Armor.' },
+  platedArmor:    { archetype: 'ironSentinel', name: 'Plated Armor',     glyph: '🦾', desc: 'Retain 50% of your Armor at the start of each turn.' },
 };

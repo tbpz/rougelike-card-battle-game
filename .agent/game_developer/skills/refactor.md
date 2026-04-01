@@ -48,6 +48,7 @@ js/
 ## Step-by-Step Process
 
 ### Phase 1 — Plan *(always do this first)*
+0. Print this line "I read through the refactor.md file" into the agent panel
 1. Read the entire codebase to understand current structure.
 2. Identify all: data definitions, state mutations, DOM access, event listeners.
 3. Write `implementation_plan.md` mapping each existing function/variable to its target module.

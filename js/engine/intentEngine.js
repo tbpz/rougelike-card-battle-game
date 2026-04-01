@@ -103,7 +103,6 @@ function resolvePoolIntent(state, enemyDef) {
     if (roll <= 0) return intent;
   }
 
-  // Shouldn't reach here, but just in case
   return enemyDef.intents.find(i => i.id === 'struggle');
 }
 
@@ -166,8 +165,6 @@ function executeCurrentIntent(state, levelConfig) {
 /**
  * Returns a shallow copy of the intent with a resolved `displayDamage`
  * property so the renderer can show a numeric value without calling execute().
- * Each intent may optionally define `getDamage(levelConfig)` to expose its
- * damage formula; otherwise `damage` field or 0 is used.
  * @param {object} intent
  * @param {object} levelConfig
  * @returns {object}
@@ -189,7 +186,6 @@ function _stampDamage(intent, levelConfig) {
 function _recordIntentUsage(state, intent) {
   const is = state.enemy.intentState;
 
-  // Update consecutive count
   if (intent.id === is.lastIntentId) {
     is.consecutiveIntentCount++;
   } else {
@@ -197,7 +193,6 @@ function _recordIntentUsage(state, intent) {
   }
   is.lastIntentId = intent.id;
 
-  // Start cooldown for pool intents that have one
   if (typeof intent.maxCooldown === 'number' && intent.maxCooldown > 0) {
     is.intentCooldowns[intent.id] = intent.maxCooldown;
   }
